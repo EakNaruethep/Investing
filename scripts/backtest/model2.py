@@ -60,7 +60,11 @@ def evaluate(t,y,price=None,v2=True):
     hist=[e[k-2],e[k-1],e[k]]
     cagr=((e3/e0)**(1/3)-1) if (e0>0 and e3>0) else None
     g=(15.0 if e3>0 else None) if cagr is None else cl(0.75*cagr*100,0,15)
-    flag = v2 and (cagr is None or cagr>0.40 or min(hist)<=0)
+    # rule C: skip Graham only if EPS grew >40%/yr over BOTH 3y and 5y (3y only when 5y data is missing), or a loss in 3y
+    e5=e[k-5] if k>=5 else None
+    cagr5=((e3/e5)**(1/5)-1) if (e5 and e5>0 and e3>0) else None
+    fast = cagr is None or (cagr>0.40 and (cagr5 is None or cagr5>0.40))
+    flag = v2 and (fast or min(hist)<=0)
     eps=e3/FX[y]*5 if t=='TSM' else e3
     Yld=max(AAA[y],4.4) if v2 else AAA[y]
     price=price if price is not None else P[t][y-2016]

@@ -52,7 +52,7 @@ html = f'''<!doctype html>
 <tr><th>ข้อ</th><th style="text-align:left">ระดับ 1: ซื้อเต็ม</th><th style="text-align:left">ระดับ 2: ทยอย 1/3</th></tr>
 <tr><td>A. ราคา</td><td style="text-align:left;white-space:normal">P/V ≤ 0.70 โดย Y = max(Aaa, 4.4%)</td><td style="text-align:left;white-space:normal">P/V ≤ 0.70 โดยใช้ Aaa จริง</td></tr>
 <tr><td>B. คุณภาพ</td><td style="text-align:left;white-space:normal">ผ่านด่าน q ≥ 6, cf ≥ 5, bs ≥ 5</td><td style="text-align:left;white-space:normal">คะแนนน้ำหนักเดิม (25/25/20/15/15) ≥ 7.5</td></tr>
-<tr><td>C. ใช้สูตรได้</td><td style="text-align:left;white-space:normal" colspan="2">EPS โต 3 ปีไม่เกิน 40%/ปี และไม่ขาดทุนใน 3 ปี (ใช้กับทั้ง 2 ระดับ)</td></tr>
+<tr><td>C. ใช้สูตรได้</td><td style="text-align:left;white-space:normal" colspan="2">EPS ไม่ได้โตเกิน 40%/ปี ทั้งเฉลี่ย 3 ปีและ 5 ปี และไม่ขาดทุนใน 3 ปี (ใช้กับทั้ง 2 ระดับ · ปี 2016–2017 ไม่มีข้อมูล 5 ปี ใช้ 3 ปีอย่างเดียว)</td></tr>
 <tr><td>D. ข่าวสำคัญ</td><td style="text-align:left;white-space:normal" colspan="2"><b>ทดสอบไม่ได้</b> (ต้องใช้วิจารณญาณกับข่าว ณ เวลานั้น) จึงไม่ได้ใช้ในการจำลอง</td></tr>
 <tr><td>ไม่มีสัญญาณ</td><td style="text-align:left;white-space:normal" colspan="2">เงินอยู่ใน S&amp;P 500 (เทียบ IVV)</td></tr>
 </table></div>
