@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Graham 7 นางฟ้า</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme:light;
+  --bg:#f6f5f2; --surface-1:#fcfcfb; --border:#e3e1db; --grid:#ebe9e4;
+  --text-primary:#0b0b0b; --text-secondary:#52514e; --text-muted:#7a7873;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --s5:#e87ba4;
+  --pos:#2a78d6; --neg:#eb6834;
+  --good:#0a7d3e; --good-bg:#e5f4ea; --warn:#9a6200; --warn-bg:#fbf0d9; --bad:#b42318; --bad-bg:#fbe7e5;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#121211; --surface-1:#1a1a19; --border:#2e2d2a; --grid:#262523;
+    --text-primary:#f0efec; --text-secondary:#c3c2b7; --text-muted:#8f8d86;
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181;
+    --pos:#3987e5; --neg:#d95926;
+    --good:#5fd08a; --good-bg:#16301f; --warn:#f0b54a; --warn-bg:#33270f; --bad:#ff8a7a; --bad-bg:#3a1714;
+  }
+}
+:root[data-theme="dark"]{
+    color-scheme:dark;
+    --bg:#121211; --surface-1:#1a1a19; --border:#2e2d2a; --grid:#262523;
+    --text-primary:#f0efec; --text-secondary:#c3c2b7; --text-muted:#8f8d86;
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181;
+    --pos:#3987e5; --neg:#d95926;
+    --good:#5fd08a; --good-bg:#16301f; --warn:#f0b54a; --warn-bg:#33270f; --bad:#ff8a7a; --bad-bg:#3a1714;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text-primary);font-family:"IBM Plex Sans Thai",system-ui,sans-serif;line-height:1.6;font-size:15px}
+.wrap{max-width:1080px;margin:0 auto;padding:28px 16px 64px}
+h1{font-size:28px;line-height:1.25;margin:0 0 6px}
+h2{font-size:20px;margin:40px 0 4px}
+h3{font-size:16px;margin:0 0 6px}
+p{margin:6px 0}
+.sub{color:var(--text-secondary)}
+.muted{color:var(--text-muted);font-size:13px}
+.card{background:var(--surface-1);border:1px solid var(--border);border-radius:12px;padding:18px;margin-top:14px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.tile .big{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums}
+.formula{font-family:ui-monospace,Menlo,monospace;font-size:14px;background:var(--bg);border-radius:8px;padding:10px 12px;overflow-x:auto}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%;font-size:14px;font-variant-numeric:tabular-nums}
+th,td{padding:8px 10px;border-bottom:1px solid var(--border);text-align:right;white-space:nowrap}
+th{color:var(--text-secondary);font-weight:600;font-size:12.5px;vertical-align:bottom}
+td:first-child,th:first-child{text-align:left}
+tr:last-child td{border-bottom:none}
+.badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12.5px;font-weight:600;white-space:nowrap}
+.b-good{background:var(--good-bg);color:var(--good)}
+.b-warn{background:var(--warn-bg);color:var(--warn)}
+.b-bad{background:var(--bad-bg);color:var(--bad)}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--text-secondary);margin:6px 0 4px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+svg text{font-family:inherit}
+.chart svg{display:block;width:100%;height:auto}
+.mini{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.mini .card{margin-top:0;padding:12px}
+#tip{position:fixed;pointer-events:none;background:var(--surface-1);color:var(--text-primary);border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:13px;box-shadow:0 4px 14px rgba(0,0,0,.15);opacity:0;transition:opacity .1s;z-index:9;max-width:260px}
+.stock{display:grid;grid-template-columns:1fr;gap:6px}
+.stock dl{display:grid;grid-template-columns:120px 1fr;gap:4px 12px;margin:8px 0 0}
+.stock dt{color:var(--text-secondary);font-weight:600;font-size:13.5px}
+.stock dd{margin:0}
+@media (max-width:560px){.stock dl{grid-template-columns:1fr}.stock dt{margin-top:6px}}
+.callout{border-left:4px solid var(--s1);padding:10px 14px;background:var(--surface-1);border-radius:0 10px 10px 0;margin-top:14px}
+ul{margin:6px 0;padding-left:20px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>ประเมินมูลค่า 7 นางฟ้า ด้วย Graham Formula (revised)</h1>
+<p class="sub">Apple · Microsoft · Alphabet · Amazon · Meta · Nvidia · Tesla — EPS ตัดรายการพิเศษ · g สูงสุด 15% · Margin of Safety 30%</p>
+<p class="muted">จัดทำ 16 พ.ย. 2026 · ราคาปิด 13 พ.ย. 2026 · งบการเงินล่าสุดที่ประกาศแล้ว · ควร review ครั้งถัดไป: หลัง Nvidia ประกาศงบ (17 พ.ย. 2026) และทุกไตรมาส</p>
+
+<div class="callout">
+<b>สรุปสั้น:</b> ณ ราคาวันนี้ <b>ยังไม่มีตัวไหนลงมาถึงราคาซื้อ (MOS 30%)</b> ตัวที่ใกล้ที่สุดคือ <b>Nvidia</b> (ราคาต่ำกว่ามูลค่า Graham ~14%) ตามด้วยกลุ่มที่ใกล้ราคาเหมาะสมคือ <b>Alphabet, Meta, Microsoft</b> (แพงกว่ามูลค่า 5–8%) ส่วน <b>Apple, Amazon แพงชัดเจน</b> และ <b>Tesla ไม่เข้ากับสูตร Graham</b> เลย<br>
+เมื่อรวมคุณภาพธุรกิจ กระแสเงินสด หนี้ และ "ธุรกิจเดิมรองรับการลงทุนใหม่" อันดับคือ <b>NVDA (8.60) > MSFT (7.85) > GOOGL (7.65) > META (7.08) > AAPL (6.72) > AMZN (5.17) > TSLA (2.73)</b>
+</div>
+
+<h2>1. สูตรและสมมติฐาน</h2>
+<div class="card">
+<div class="formula">V = EPS<sub>normalized</sub> × (8.5 + 2g) × 4.4 / Y &nbsp;&nbsp;→&nbsp;&nbsp; ราคาซื้อ = V × (1 − 30%)</div>
+<div class="grid3" style="margin-top:12px">
+ <div class="tile"><div class="muted">Y = Moody's Aaa corporate bond yield</div><div class="big">6.12%</div><div class="muted">ต.ค. 2026 (ล่าสุดที่ FRED เผยแพร่) — ก.ย. 6.03%, มิ.ย. 5.52%</div></div>
+ <div class="tile"><div class="muted">g = อัตราเติบโต EPS ต่อปี (7–10 ปี)</div><div class="big">min(15%, 0.75 × g<sub>3Y</sub>)</div><div class="muted">g<sub>3Y</sub> = คาดการณ์นักวิเคราะห์ 3 ปี; คูณ 0.75 เพราะการเติบโตระยะยาวมักชะลอกว่า 3 ปีแรก</div></div>
+ <div class="tile"><div class="muted">ตัวคูณ 4.4 / Y</div><div class="big">0.719</div><div class="muted">ดอกเบี้ยสูงกว่าปี 1962 (4.4%) จึงกดมูลค่าทุกตัวลง ~28%</div></div>
+</div>
+<p class="muted" style="margin-top:10px">EPS normalized = กำไรต่อหุ้นย้อนหลัง 12 เดือน หลังตัดรายการที่ไม่เกิดซ้ำ (กำไร/ขาดทุนจากการตีราคาเงินลงทุน, ค่าปรับคดี, ภาษีผิดปกติ, regulatory credits) — รายละเอียดการปรับแต่ละตัวอยู่ในตารางข้อ 2</p>
+</div>
+
+<h2>2. ตารางมูลค่า Graham เทียบราคาปัจจุบัน</h2>
+<p class="muted">หน่วย USD ต่อหุ้น · เรียงตาม ราคา/มูลค่า (ถูก → แพง)</p>
+<div class="card tblwrap">
+<table id="valtbl"></table>
+</div>
+<div class="card tblwrap" style="margin-top:10px">
+<h3>การตัดรายการพิเศษ (EPS ตามงบ → EPS ที่ใช้คำนวณ)</h3>
+<table id="adjtbl"></table>
+</div>
+
+<h2>3. ราคาตลาดเทียบมูลค่า Graham</h2>
+<p class="sub">แท่ง = ราคาตลาด ÷ มูลค่า Graham · ต่ำกว่า 0.70 = อยู่ในโซนซื้อ (มี MOS 30%) · ต่ำกว่า 1.00 = ต่ำกว่ามูลค่า</p>
+<div class="card chart"><svg id="c1"></svg></div>
+
+<h2>4. กระแสเงินสดย้อนหลัง (USD พันล้าน)</h2>
+<div class="legend"><span><i style="background:var(--s1)"></i>Free cash flow (แท่ง)</span><span><i style="background:var(--s2);height:3px;border-radius:2px"></i>Operating cash flow (เส้น)</span></div>
+<p class="muted">แต่ละกราฟใช้สเกลของตัวเอง เพื่อดูแนวโน้ม · ช่องว่างระหว่างเส้นกับแท่ง = capex</p>
+<div class="mini" id="c2"></div>
+
+<h2>5. หนี้และงบดุล</h2>
+<p class="sub">เงินสด + เงินลงทุน − หนี้รวม (รวมสัญญาเช่า) · USD พันล้าน · ข้อมูลไตรมาสล่าสุด</p>
+<div class="card chart"><svg id="c3"></svg></div>
+<div class="card tblwrap"><table id="bstbl"></table></div>
+
+<h2>6. คะแนนและอันดับ</h2>
+<div class="card tblwrap">
+<h3>น้ำหนักที่ใช้ และเหตุผล</h3>
+<table id="wtbl"></table>
+</div>
+<div class="legend" id="lg4"></div>
+<div class="card chart"><svg id="c4"></svg></div>
+<div class="card tblwrap"><table id="sctbl"></table></div>
+
+<h2>7. เทียบกับเกณฑ์ของ Eak (win 70 / lose 30)</h2>
+<div class="card">
+<p>กติกาที่ใช้ตัดสิน: จะถือว่า "โอกาสชนะ ≥ 70%" ได้ ต้องผ่านทั้ง 2 ข้อ (1) ราคา ≤ ราคาซื้อ MOS 30% ซึ่งทำให้ upside ถึงมูลค่า Graham ≥ 43% เทียบ downside ที่ถูกจำกัดด้วยส่วนเผื่อ และ (2) คะแนนรวม ≥ 7.5 ซึ่งแปลว่าธุรกิจดีพอที่ถ้าประเมินผิดก็ไม่ขาดทุนถาวร</p>
+<div class="tblwrap"><table id="eaktbl"></table></div>
+</div>
+
+<h2>8. รายละเอียดรายตัว</h2>
+<div id="stocks"></div>
+
+<h2>9. ข้อจำกัดของสูตร Graham กับหุ้นกลุ่มนี้</h2>
+<div class="card">
+<ul>
+<li><b>Capex AI ไม่อยู่ในสูตร:</b> Graham ใช้ EPS ซึ่งยังไม่หักเงินลงทุนก้อนใหญ่ (ค่าเสื่อมจะตามมาภายหลัง) MSFT, GOOGL, META, AMZN มี FCF ต่ำกว่ากำไรมาก มูลค่า Graham จึงอาจ <b>สูงเกินจริง</b> สำหรับกลุ่มนี้</li>
+<li><b>หุ้นวัฏจักร:</b> EPS ของ Nvidia โตจาก $0.17 เป็น ~$7 ใน 3 ปี ถ้ารอบ AI capex ชะลอ EPS อาจลดลงแรง มูลค่า Graham ที่ได้วันนี้จึงไม่ใช่พื้น</li>
+<li><b>Tesla และ Amazon:</b> มูลค่าตลาดขึ้นกับธุรกิจในอนาคต (robotaxi, AWS ที่ลงทุนหนัก) สูตรที่ใช้กำไรปัจจุบันจะให้ค่าต่ำเสมอ ใช้ผลนี้เป็นสัญญาณ "ราคาจ่ายเพื่อความหวัง" ไม่ใช่มูลค่าที่แน่นอน</li>
+<li><b>ความไวต่อสมมติฐาน:</b> ถ้า Aaa yield ลงไป 5% มูลค่าทุกตัวจะเพิ่ม ~22% · ถ้า g ลดลง 2 จุด มูลค่าหุ้นที่ g = 15% จะลด ~10%</li>
+<li><b>EPS ล่วงหน้าของนักวิเคราะห์</b> เป็นแบบ non-GAAP และของ AMZN/GOOGL อาจรวมกำไรเงินลงทุนบางส่วน ใช้เป็นตัวเปรียบเทียบเท่านั้น</li>
+<li>Normalized EPS ของ MSFT และ AMZN เป็น <b>ค่าประมาณ</b> (แหล่งข้อมูลไม่แยกรายการพิเศษครบทุกไตรมาส) · Nvidia จะประกาศงบ 17 พ.ย. 2026 ตัวเลขจะเปลี่ยน</li>
+</ul>
+</div>
+
+<h2>แหล่งข้อมูล</h2>
+<div class="card muted">
+<p>ราคาหุ้น, งบกำไรขาดทุน, กระแสเงินสด, งบดุล, สถิติ (ROIC/margin) และคาดการณ์นักวิเคราะห์: stockanalysis.com (ข้อมูล S&amp;P Global) หน้า /stocks/{ticker}/, /financials/, /financials/income-statement/, /financials/cash-flow-statement/, /financials/balance-sheet/, /statistics/, /forecast/ — เข้าถึง 16 พ.ย. 2026 · ราคาปิด 13 พ.ย. 2026</p>
+<p>Moody's Seasoned Aaa Corporate Bond Yield: FRED (fred.stlouisfed.org/series/AAA) ค่า ต.ค. 2026 = 6.12% · 10Y Treasury (DGS10) 12 พ.ย. 2026 = 5.10%</p>
+<p>คะแนนคุณภาพธุรกิจ, กระแสเงินสด, หนี้ และธุรกิจหลัก เป็นการประเมินของ Claude จากตัวเลขข้างต้น (มีเหตุผลกำกับในข้อ 8) ไม่ใช่ตัวเลขจากแหล่งข้อมูล</p>
+<p>Claude ไม่ใช่ที่ปรึกษาการลงทุนที่ได้รับใบอนุญาต รายงานนี้ใช้ประกอบการตัดสินใจของ Eak เอง</p>
+</div>
+</div>
+<div id="tip"></div>
+<script>
+const S={"NVDA": {"name": "Nvidia", "price": 162.85, "gaap": 7.91, "eps": 6.85, "adj": "ตัดกำไรจากเงินลงทุน (mark-to-market/ขายหุ้นที่ถือ) $30.6bn ก่อนภาษี ออก ใช้ EBT ไม่รวมรายการพิเศษ $199.2bn × (1−16%) ÷ 24.40bn หุ้น", "g3": 64.1, "fwd": 9.32, "fwdlbl": "FY27 (ม.ค. 2027)", "period": "TTM ถึง ก.ค. 2026", "g": 15.0, "V": 189.61, "buy": 132.73, "pv": 0.86, "Vf": 257.98, "buyf": 180.59, "vs": 8.8, "q": 8.5, "cf": 9, "bs": 10, "core": 6.5, "total": 8.6}, "MSFT": {"name": "Microsoft", "price": 523.88, "gaap": 19.15, "eps": 17.52, "adj": "ตัดกำไรจากการขายเงินลงทุน ~$15.2bn (TTM, ตัวเลขจากงบกระแสเงินสด) หลังภาษี 19.4% ออก (ส่วนได้เสียจาก OpenAI ไม่ได้แยกสำหรับ TTM — เป็นค่าประมาณ)", "g3": 20.2, "fwd": 20.01, "fwdlbl": "FY27 (มิ.ย. 2027)", "period": "TTM ถึง ก.ย. 2026", "g": 15.0, "V": 484.95, "buy": 339.46, "pv": 1.08, "Vf": 553.87, "buyf": 387.71, "vs": 7.1, "q": 9.5, "cf": 6.5, "bs": 7, "core": 9, "total": 7.85}, "AAPL": {"name": "Apple", "price": 356.27, "gaap": 8.98, "eps": 8.98, "adj": "ไม่พบรายการพิเศษใน FY2026 (มีแค่รายได้อื่น +$1.2bn ซึ่งเล็กมาก) ใช้ EPS ตามงบ", "g3": 9.4, "fwd": 9.42, "fwdlbl": "FY27 (ก.ย. 2027)", "period": "FY ถึง ก.ย. 2026", "g": 7.1, "V": 146.56, "buy": 102.59, "pv": 2.43, "Vf": 153.74, "buyf": 107.62, "vs": 0, "q": 9, "cf": 10, "bs": 8.5, "core": 8, "total": 6.72}, "GOOGL": {"name": "Alphabet", "price": 295.77, "gaap": 19.15, "eps": 10.7, "adj": "ตัดกำไรจากเงินลงทุน $129.1bn ก่อนภาษี ออก (EPS ตามงบ $19.15 เกือบครึ่งเป็นกำไรทางบัญชี) ใช้ EBT ไม่รวมรายการพิเศษ $158.5bn × (1−17%)", "g3": 18.8, "fwd": 13.09, "fwdlbl": "FY26 (ธ.ค. 2026)", "period": "TTM ถึง ก.ย. 2026", "g": 14.1, "V": 282.33, "buy": 197.63, "pv": 1.05, "Vf": 345.39, "buyf": 241.77, "vs": 7.3, "q": 8.5, "cf": 5, "bs": 9.5, "core": 8.5, "total": 7.65}, "AMZN": {"name": "Amazon", "price": 266.66, "gaap": 12.37, "eps": 6.78, "adj": "ตัดกำไรจากเงินลงทุน (ส่วนใหญ่หุ้น Anthropic) $80.3bn ก่อนภาษี ออก ใช้ EBT ไม่รวมรายการพิเศษ $94.6bn × (1−22%) — ใช้ TTM ถึง มิ.ย. 2026 เพราะแหล่งข้อมูลแยกรายการถึงแค่ไตรมาสนั้น", "g3": 25.1, "fwd": 9.6, "fwdlbl": "FY26 (ธ.ค. 2026)*", "period": "TTM ถึง มิ.ย. 2026", "g": 15.0, "V": 187.67, "buy": 131.37, "pv": 1.42, "Vf": 265.73, "buyf": 186.01, "vs": 4.5, "q": 7, "cf": 2.5, "bs": 5, "core": 7, "total": 5.17}, "META": {"name": "Meta", "price": 641.69, "gaap": 29.33, "eps": 30.74, "adj": "บวกคืนค่าใช้จ่ายคดีความ $11.9bn และขาดทุนเงินลงทุน $2.1bn (EBT ไม่รวมรายการพิเศษ $92.8bn) และปรับอัตราภาษีจาก 4.6% (ผิดปกติ) เป็นอัตราปกติ ~15%", "g3": 12.5, "fwd": 29.73, "fwdlbl": "FY26 (ธ.ค. 2026)", "period": "TTM ถึง ก.ย. 2026", "g": 9.4, "V": 603.35, "buy": 422.34, "pv": 1.06, "Vf": 583.52, "buyf": 408.46, "vs": 7.2, "q": 8, "cf": 5.5, "bs": 7, "core": 7.5, "total": 7.08}, "TSLA": {"name": "Tesla", "price": 390.22, "gaap": 0.91, "eps": 0.65, "adj": "ตัดรายได้ขาย regulatory credits $1.18bn (หลังภาษี) ออก เพราะไม่ใช่กำไรจากธุรกิจหลักและกำลังหายไปตามนโยบาย", "g3": 24.9, "fwd": null, "fwdlbl": "—", "period": "TTM ถึง ก.ย. 2026", "g": 15.0, "V": 17.99, "buy": 12.59, "pv": 21.69, "Vf": null, "buyf": null, "vs": 0, "q": 3, "cf": 2, "bs": 8, "core": 2.5, "total": 2.73}}, X={"fcf": {"NVDA": {"lbl": ["FY22", "FY23", "FY24", "FY25", "FY26", "TTM"], "ocf": [9.11, 5.64, 28.09, 64.09, 102.72, 134.36], "fcf": [8.13, 3.81, 27.02, 60.85, 96.68, 127.01]}, "MSFT": {"lbl": ["FY22", "FY23", "FY24", "FY25", "FY26", "TTM"], "ocf": [89.04, 87.58, 118.55, 136.16, 182.94, 195.88], "fcf": [65.15, 59.48, 74.07, 71.61, 66.99, 59.96]}, "AAPL": {"lbl": ["FY22", "FY23", "FY24", "FY25", "FY26"], "ocf": [122.15, 110.54, 118.25, 111.48, 145.1], "fcf": [111.44, 99.58, 108.81, 98.77, 136.06]}, "GOOGL": {"lbl": ["FY21", "FY22", "FY23", "FY24", "FY25", "TTM"], "ocf": [91.65, 91.5, 101.75, 125.3, 164.71, 179.55], "fcf": [67.01, 60.01, 69.5, 72.76, 73.27, 19.75]}, "AMZN": {"lbl": ["FY21", "FY22", "FY23", "FY24", "FY25", "TTM"], "ocf": [46.33, 46.75, 84.95, 115.88, 139.51, 168.3], "fcf": [-14.73, -16.89, 32.22, 32.88, 7.7, -46.89]}, "META": {"lbl": ["FY21", "FY22", "FY23", "FY24", "FY25", "TTM"], "ocf": [57.68, 50.48, 71.11, 91.33, 115.8, 133.09], "fcf": [38.99, 19.29, 44.07, 54.07, 46.11, 28.65]}, "TSLA": {"lbl": ["FY21", "FY22", "FY23", "FY24", "FY25", "TTM"], "ocf": [11.5, 14.72, 13.26, 14.92, 14.75, 18.71], "fcf": [4.98, 7.56, 4.36, 3.58, 6.22, 3.3]}}, "bs": {"NVDA": {"cash": 113.6, "debt": 38.9, "eq": 229.0, "roic": 92.0, "gm": 74.7, "opm": 65.2, "capex": 7.35, "sbc": 7.24}, "MSFT": {"cash": 102.3, "debt": 133.9, "eq": 470.5, "roic": 25.4, "gm": 67.7, "opm": 47.1, "capex": 135.92, "sbc": 12.56}, "AAPL": {"cash": 136.9, "debt": 94.5, "eq": 112.1, "roic": 93.9, "gm": 48.8, "opm": 33.0, "capex": 9.04, "sbc": 13.7}, "GOOGL": {"cash": 265.1, "debt": 150.3, "eq": 677.6, "roic": 23.8, "gm": 60.9, "opm": 33.3, "capex": 159.8, "sbc": 30.41}, "AMZN": {"cash": 262.6, "debt": 304.8, "eq": 613.6, "roic": 10.9, "gm": 51.4, "opm": 13.1, "capex": 215.19, "sbc": 19.87}, "META": {"cash": 115.1, "debt": 114.8, "eq": 272.4, "roic": 29.6, "gm": 81.0, "opm": 37.8, "capex": 104.44, "sbc": 26.94}, "TSLA": {"cash": 48.1, "debt": 16.5, "eq": 89.9, "roic": 4.0, "gm": 19.3, "opm": 3.0, "capex": 15.41, "sbc": 4.3}}}, N={"NVDA": {"q": "ROIC 92%, margin ขั้นต้น 75%, op margin 65% สูงสุดในกลุ่ม ครองตลาด GPU + CUDA ecosystem แต่ธุรกิจมีวัฏจักร และลูกค้ากระจุกที่ hyperscaler ไม่กี่ราย", "cfn": "FCF โตจาก $8bn (FY22) เป็น $127bn (TTM) capex แค่ ~2% ของรายได้ เป็นตัวเดียวที่ AI ทำให้เงินสด 'เข้า' ไม่ใช่ 'ออก'", "bsn": "เงินสด+เงินลงทุน $114bn vs หนี้ $39bn = net cash ~$75bn ดอกเบี้ยจ่ายแทบไม่มีผล (interest coverage 426x)", "coren": "ธุรกิจหลัก (data center) คือตัวเดียวกับธุรกิจที่เดิมพัน ไม่มีธุรกิจเดิมอื่นรองรับถ้า AI capex ชะลอ → หักคะแนน", "risk": "EPS ปัจจุบันอาจเป็นจุดสูงสุดของวัฏจักร (Graham แพ้ทางหุ้น cyclical) · circular financing กับลูกค้า AI · ข้อจำกัดส่งออกจีน · ประกาศงบ Q3 FY27 วันที่ 17 พ.ย. 2026 ตัวเลขจะเปลี่ยน", "verdict": "ใกล้ที่สุดในกลุ่ม: ราคาต่ำกว่ามูลค่า Graham 14% แต่ยังไม่ถึงราคาซื้อ MOS 30% ($133) ถ้าใช้ EPS ล่วงหน้า ราคาซื้อจะเป็น ~$181 ซึ่งราคาตอนนี้ต่ำกว่าแล้ว"}, "MSFT": {"q": "ROIC 25%, op margin 47% รายได้แบบ subscription (Office 365, Azure) ลูกค้าองค์กรย้ายออกยาก = moat แข็งที่สุดตัวหนึ่ง", "cfn": "OCF โตต่อเนื่อง $89bn → $196bn แต่ capex พุ่งจาก $24bn → $136bn ทำให้ FCF ทรงตัว/ลดลง ($74bn → $60bn) และนักวิเคราะห์คาด FCF FY27 เหลือ ~$33bn", "bsn": "หนี้รวม $134bn ส่วนใหญ่เป็นสัญญาเช่า data center ($98bn) net debt ~$32bn แต่ interest coverage 50x ยังสบาย", "coren": "ตรงสเปก Eak ที่สุด: Office/Windows/Azure ทำเงินสดมหาศาลมารองรับการลงทุน AI ถ้า AI ไม่สำเร็จธุรกิจเดิมยังอยู่", "risk": "ผลตอบแทนจาก capex AI ยังพิสูจน์ไม่ได้ · ความสัมพันธ์กับ OpenAI · margin อาจถูกกดจากค่าเสื่อม data center", "verdict": "แพงกว่ามูลค่า Graham 8% ราคาซื้อ MOS ≈ $339 (ห่างราคาตลาด −35%) คุณภาพสูงสุดแต่ยังไม่มีส่วนเผื่อความปลอดภัย"}, "AAPL": {"q": "ROIC 94%, ecosystem iPhone + Services ลูกค้าภักดีสูงมาก pricing power ชัด แต่การเติบโตต่ำ (คาด EPS FY27 +5%)", "cfn": "FCF สม่ำเสมอที่สุด $99–136bn ทุกปี FCF > กำไรสุทธิ capex เพียง ~2% ของรายได้ คืนเงินผู้ถือหุ้นผ่าน buyback ~$90bn/ปี", "bsn": "เงินสด+เงินลงทุน $137bn vs หนี้ $94bn = net cash ~$42bn ส่วนทุนต่ำเพราะซื้อหุ้นคืน (ไม่ใช่สัญญาณอันตราย)", "coren": "ธุรกิจเดิมแข็งแรงมาก ไม่ได้ทุ่มเงินลงทุนใหม่ขนาดใหญ่ ความเสี่ยงต่ำ แต่ไม่มีตัวเร่งการเติบโตชัด", "risk": "P/E ~40x สำหรับบริษัทที่โตปีละ 5–10% · พึ่งพาจีนทั้งการผลิตและยอดขาย · คดี App Store/Google search deal", "verdict": "แพงที่สุดเมื่อเทียบคุณภาพ ราคาตลาดสูงกว่ามูลค่า Graham 2.4 เท่า ราคาซื้อ MOS ≈ $103 ธุรกิจดีแต่ราคาไม่ให้ win/lose 70/30"}, "GOOGL": {"q": "ROIC 24%, op margin 33% Search + YouTube + Cloud + TPU ของตัวเอง เป็นเจ้าที่มี AI stack ครบที่สุด แต่ search เสี่ยงถูก AI chatbot แย่งส่วนแบ่ง", "cfn": "OCF โตดี $92bn → $180bn แต่ capex พุ่งเป็น $160bn ทำให้ FCF TTM เหลือแค่ $20bn (จาก $73bn ปีก่อน) ระวัง: EPS ตามงบ $19.15 เกือบครึ่งเป็นกำไรตีราคาเงินลงทุน", "bsn": "เงินสด+เงินลงทุน $265bn vs หนี้ $150bn = net cash ~$115bn งบดุลแข็งที่สุดอันดับต้น", "coren": "Search/YouTube ทำเงินสดรองรับการลงทุน AI/Cloud/Waymo ได้ ตรงสเปก Eak แต่ธุรกิจหลักเองกำลังถูก AI ท้าทาย", "risk": "การแข่งขัน AI search · คดีผูกขาด (DOJ) · capex สูงกดกระแสเงินสด", "verdict": "ใกล้ราคาเหมาะสม (แพงกว่ามูลค่า Graham 5%) ราคาซื้อ MOS ≈ $198 ถ้าใช้ EPS ล่วงหน้าราคาซื้อ ~$242"}, "AMZN": {"q": "ROIC 11% ต่ำที่สุดในกลุ่ม big tech (รวมค้าปลีกที่ margin บาง) แต่ AWS + โฆษณาเป็นธุรกิจคุณภาพสูง", "cfn": "FCF ผันผวนที่สุด ติดลบ 3 ใน 6 ปี TTM −$47bn เพราะ capex $215bn > OCF $168bn ต้องกู้เพิ่ม $124bn ใน 12 เดือน", "bsn": "หนี้รวม $305bn (รวมสัญญาเช่า) สูงกว่าเงินสด+เงินลงทุน $263bn (ส่วนหนึ่งเป็นหุ้น Anthropic ที่ขายไม่ง่าย) หนี้เพิ่มเร็ว", "coren": "มีธุรกิจเดิมดี (AWS) แต่การลงทุนใหม่ใหญ่กว่าเงินสดที่ธุรกิจเดิมผลิตได้ = ใช้หนี้ช่วย ไม่ตรงสเปก Eak", "risk": "กำไรตามงบ $12.37 บวมจากกำไรหุ้น Anthropic (~$80bn) · capex ต้องให้ผลตอบแทนจริง · หนี้เพิ่มเร็วในยุคดอกเบี้ยสูง", "verdict": "แพงกว่ามูลค่า Graham 42% ราคาซื้อ MOS ≈ $131 Graham อาจกดมูลค่าต่ำเกินจริงเพราะ AWS ลงทุนหนัก แต่ไม่ผ่าน 70/30 ตอนนี้"}, "META": {"q": "ROIC 30%, margin ขั้นต้น 81% ผู้ใช้ 3 พันล้านคน ธุรกิจโฆษณาทำกำไรสูงมาก แต่รายได้พึ่งโฆษณาเกือบ 100%", "cfn": "OCF โตเร็ว $58bn → $133bn แต่ capex $104bn ทำให้ FCF ลดเหลือ $29bn นักวิเคราะห์คาด FCF ปี 2026 อาจติดลบ", "bsn": "เงินสด+เงินลงทุน $115bn ≈ หนี้ $115bn (net cash ~0) จากเดิม net cash สูง หนี้เพิ่มเพื่อสร้าง data center", "coren": "Family of Apps แข็งแรงมากรองรับการลงทุน AI และ Reality Labs ได้ แต่ Reality Labs ขาดทุนหลายปีโดยยังไม่เห็นผล", "risk": "ค่าปรับ/คดี ($11.9bn ใน TTM) · กฎระเบียบความเป็นส่วนตัว · ผู้บริหารมีอำนาจควบคุมเด็ดขาด", "verdict": "ใกล้ราคาเหมาะสม (แพงกว่ามูลค่า Graham 6%) ราคาซื้อ MOS ≈ $422 g ถูกจำกัดที่ 9.4% ตามคาดการณ์ 3 ปี ถ้าการเติบโตดีกว่าคาด มูลค่าจะสูงขึ้นมาก"}, "TSLA": {"q": "ROIC 4%, op margin 3% กำไรต่อหุ้นลดลง 4 ปีติด ($4.30 → $0.91) ธุรกิจรถยนต์ถูกแข่งขันด้านราคาจากจีน", "cfn": "OCF ~$15–19bn แต่ FCF แค่ $3–8bn ต่อปี และ TTM FCF $3.3bn ต่ำกว่า SBC $4.3bn = เงินสดที่เหลือจริงให้ผู้ถือหุ้นแทบไม่มี", "bsn": "งบดุลดี: เงินสด $48bn vs หนี้ $16bn net cash ~$32bn จุดแข็งเดียวที่ชัดเจน", "coren": "ไม่ตรงสเปก Eak: ธุรกิจเดิม (รถยนต์) อ่อนแอลง ขณะที่มูลค่าหุ้นแทบทั้งหมดขึ้นกับธุรกิจใหม่ (robotaxi, Optimus) ที่ยังไม่มีรายได้", "risk": "มูลค่าขึ้นกับอนาคตที่ยังพิสูจน์ไม่ได้ · ข่าวควบรวม SpaceX (ยังไม่ยืนยัน) · key-man risk", "verdict": "Graham ไม่เหมาะกับ Tesla ราคาตลาดสูงกว่ามูลค่า Graham ~22 เท่า แปลว่าตลาดจ่ายเงินเพื่อความหวังในธุรกิจใหม่ ไม่ใช่กำไรปัจจุบัน ไม่ผ่านเกณฑ์ 70/30"}}, W={"vs": 25, "q": 25, "cf": 20, "bs": 15, "core": 15};
+const T=Object.keys(S);
+const $=id=>document.getElementById(id);
+const f=(v,d=2)=>v==null?'—':v.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+const tip=$('tip');
+function bindTip(el,html){el.addEventListener('mousemove',e=>{tip.innerHTML=html;tip.style.opacity=1;const x=Math.min(e.clientX+14,innerWidth-270);tip.style.left=x+'px';tip.style.top=(e.clientY+14)+'px'});el.addEventListener('mouseleave',()=>tip.style.opacity=0)}
+const NS='http://www.w3.org/2000/svg';
+function el(tag,attrs,parent,text){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(text!=null)e.textContent=text;if(parent)parent.appendChild(e);return e}
+function status(d){if(d.price<=d.buy)return['b-good','โซนซื้อ'];if(d.price<=d.V)return['b-warn','ต่ำกว่ามูลค่า แต่ยังไม่ถึง MOS'];if(d.pv<=1.15)return['b-warn','ใกล้ราคาเหมาะสม'];return['b-bad','แพง']}
+const byPV=[...T].sort((a,b)=>S[a].pv-S[b].pv);
+const byScore=[...T].sort((a,b)=>S[b].total-S[a].total);
+
+// valuation table
+(()=>{let h='<tr><th>หุ้น</th><th>ราคา<br>13 พ.ย.</th><th>EPS<br>normalized</th><th>g ที่ใช้</th><th>มูลค่า<br>Graham</th><th>ราคาซื้อ<br>MOS 30%</th><th>ราคา/มูลค่า</th><th>ห่างราคาซื้อ</th><th>สถานะ</th><th>มูลค่าด้วย<br>EPS ล่วงหน้า*</th><th>ราคาซื้อ<br>(EPS ล่วงหน้า)</th></tr>';
+for(const t of byPV){const d=S[t],[c,l]=status(d);const gap=(d.buy/d.price-1)*100;
+h+=`<tr><td><b>${t}</b> <span class="muted">${d.name}</span></td><td>${f(d.price)}</td><td>${f(d.eps)}</td><td>${f(d.g,1)}%</td><td><b>${f(d.V)}</b></td><td><b>${f(d.buy)}</b></td><td>${f(d.pv)}×</td><td>${gap>0?'+':''}${f(gap,0)}%</td><td><span class="badge ${c}">${l}</span></td><td>${f(d.Vf)}</td><td>${f(d.buyf)}</td></tr>`}
+$('valtbl').innerHTML=h+'<tr><td colspan="11" class="muted" style="white-space:normal;text-align:left">* EPS ล่วงหน้า = ค่าเฉลี่ยคาดการณ์นักวิเคราะห์ (non-GAAP) ของปีบัญชีปัจจุบัน: '+T.filter(t=>S[t].fwd).map(t=>`${t} ${S[t].fwdlbl} $${f(S[t].fwd)}`).join(' · ')+' · Tesla ไม่มีคาดการณ์ปัจจุบันจากแหล่งข้อมูล · "ห่างราคาซื้อ" = ราคาต้องลงอีกกี่ % ถึงจะถึงราคาซื้อ</td></tr>'})();
+(()=>{let h='<tr><th>หุ้น</th><th>ช่วงข้อมูล</th><th>EPS ตามงบ</th><th>EPS ที่ใช้</th><th style="text-align:left">ปรับอะไร</th></tr>';
+for(const t of T){const d=S[t];h+=`<tr><td><b>${t}</b></td><td>${d.period}</td><td>${f(d.gaap)}</td><td><b>${f(d.eps)}</b></td><td style="text-align:left;white-space:normal;min-width:320px">${d.adj}</td></tr>`}
+$('adjtbl').innerHTML=h})();
+
+// chart 1: P/V bars
+(()=>{const svg=$('c1'),W0=900,rowH=40,top=28,left=90,right=150,H=top+byPV.length*rowH+30,max=3;
+svg.setAttribute('viewBox',`0 0 ${W0} ${H}`);const x=v=>left+Math.min(v,max)/max*(W0-left-right);
+for(const v of [0,0.5,1,1.5,2,2.5,3]){el('line',{x1:x(v),x2:x(v),y1:top-6,y2:H-26,stroke:'var(--grid)'},svg);el('text',{x:x(v),y:H-8,'text-anchor':'middle','font-size':12,fill:'var(--text-muted)'},svg,v.toFixed(1)+'×')}
+for(const [v,l] of [[0.7,'ราคาซื้อ (0.7×)'],[1,'มูลค่า Graham (1.0×)']]){el('line',{x1:x(v),x2:x(v),y1:top-10,y2:H-26,stroke:'var(--text-secondary)','stroke-dasharray':'4 4','stroke-width':1.5},svg);el('text',{x:x(v)+(v<1?-4:4),y:top-14,'text-anchor':v<1?'end':'start','font-size':12,fill:'var(--text-secondary)'},svg,l)}
+byPV.forEach((t,i)=>{const d=S[t],y=top+i*rowH+8,bw=x(d.pv)-left;
+el('text',{x:left-10,y:y+16,'text-anchor':'end','font-size':14,'font-weight':600,fill:'var(--text-primary)'},svg,`${t}`);
+const r=el('rect',{x:left,y:y,width:Math.max(bw,2),height:22,rx:4,fill:'var(--s1)'},svg);
+el('text',{x:left+bw+6,y:y+16,'font-size':13,fill:'var(--text-primary)'},svg,f(d.pv)+'×'+(d.pv>max?' (เกินแกน)':''));
+const hit=el('rect',{x:0,y:y-8,width:W0,height:rowH,fill:'transparent'},svg);
+bindTip(hit,`<b>${t}</b><br>ราคา $${f(d.price)}<br>มูลค่า Graham $${f(d.V)}<br>ราคาซื้อ $${f(d.buy)}<br>ราคา/มูลค่า ${f(d.pv)}×`)})})();
+
+// chart 2: cash flow small multiples
+(()=>{const box=$('c2');for(const t of T){const c=X.fcf[t];const card=document.createElement('div');card.className='card';card.innerHTML=`<h3>${t} <span class="muted">FCF ล่าสุด $${f(c.fcf[c.fcf.length-1],1)}bn</span></h3>`;const svg=document.createElementNS(NS,'svg');card.appendChild(svg);box.appendChild(card);
+const W0=300,H0=170,l=34,r=6,tp=10,b=22;svg.setAttribute('viewBox',`0 0 ${W0} ${H0}`);
+const all=[...c.ocf,...c.fcf,0];let mn=Math.min(...all),mx=Math.max(...all);mn=Math.min(0,mn);const y=v=>tp+(mx-v)/(mx-mn)*(H0-tp-b);
+const n=c.lbl.length,bwid=(W0-l-r)/n;
+const step=niceStep((mx-mn)/3);for(let v=Math.ceil(mn/step)*step;v<=mx+1e-9;v+=step){el('line',{x1:l,x2:W0-r,y1:y(v),y2:y(v),stroke:v===0?'var(--text-muted)':'var(--grid)'},svg);el('text',{x:l-4,y:y(v)+4,'text-anchor':'end','font-size':10,fill:'var(--text-muted)'},svg,Math.round(v))}
+c.fcf.forEach((v,i)=>{const x0=l+i*bwid+bwid*0.22,w=bwid*0.56,y0=y(Math.max(v,0)),h=Math.abs(y(v)-y(0));el('rect',{x:x0,y:y0,width:w,height:Math.max(h,1.5),rx:3,fill:v<0?'var(--neg)':'var(--s1)'},svg);el('text',{x:x0+w/2,y:H0-6,'text-anchor':'middle','font-size':10,fill:'var(--text-muted)'},svg,c.lbl[i]);
+const hit=el('rect',{x:l+i*bwid,y:0,width:bwid,height:H0,fill:'transparent'},svg);bindTip(hit,`<b>${t} ${c.lbl[i]}</b><br>OCF $${f(c.ocf[i],1)}bn<br>Capex $${f(c.ocf[i]-v,1)}bn<br>FCF $${f(v,1)}bn`)});
+const pts=c.ocf.map((v,i)=>`${l+i*bwid+bwid/2},${y(v)}`).join(' ');const pl=el('polyline',{points:pts,fill:'none',stroke:'var(--s2)','stroke-width':2},svg);pl.style.pointerEvents='none';
+c.ocf.forEach((v,i)=>{const cc=el('circle',{cx:l+i*bwid+bwid/2,cy:y(v),r:3.5,fill:'var(--s2)',stroke:'var(--surface-1)','stroke-width':2},svg);cc.style.pointerEvents='none'});
+const p=document.createElement('p');p.className='muted';p.style.margin='4px 0 0';p.textContent=N[t].cfn;card.appendChild(p)}
+function niceStep(s){const p=Math.pow(10,Math.floor(Math.log10(s)));for(const m of [1,2,2.5,5,10])if(m*p>=s)return m*p}})();
+
+// chart 3: net cash diverging
+(()=>{const svg=$('c3'),W0=900,rowH=36,top=10,left=90,right=100;const arr=[...T].sort((a,b)=>(X.bs[b].cash-X.bs[b].debt)-(X.bs[a].cash-X.bs[a].debt));const H=top+arr.length*rowH+26;svg.setAttribute('viewBox',`0 0 ${W0} ${H}`);
+const vals=arr.map(t=>X.bs[t].cash-X.bs[t].debt),mn=-120,mx=130;const x=v=>left+(v-mn)/(mx-mn)*(W0-left-right);
+for(const v of [-50,0,50,100]){el('line',{x1:x(v),x2:x(v),y1:top,y2:H-22,stroke:v===0?'var(--text-muted)':'var(--grid)'},svg);el('text',{x:x(v),y:H-6,'text-anchor':'middle','font-size':12,fill:'var(--text-muted)'},svg,(v>0?'+':'')+v)}
+arr.forEach((t,i)=>{const v=vals[i],y=top+i*rowH+6;el('text',{x:left-10,y:y+15,'text-anchor':'end','font-size':14,'font-weight':600,fill:'var(--text-primary)'},svg,t);
+const x0=Math.min(x(0),x(v)),w=Math.abs(x(v)-x(0));el('rect',{x:x0,y:y,width:Math.max(w,2),height:20,rx:4,fill:v>=0?'var(--pos)':'var(--neg)'},svg);
+el('text',{x:v>=0?x(v)+6:x(v)-6,y:y+15,'text-anchor':v>=0?'start':'end','font-size':13,fill:'var(--text-primary)'},svg,(v>=0?'net cash +':'net debt ')+f(Math.abs(v),0));
+const hit=el('rect',{x:0,y:y-8,width:W0,height:rowH,fill:'transparent'},svg);const b=X.bs[t];bindTip(hit,`<b>${t}</b><br>เงินสด+เงินลงทุน $${f(b.cash,1)}bn<br>หนี้รวม $${f(b.debt,1)}bn<br>Debt/Equity ${f(b.debt/b.eq)}`)});
+let h='<tr><th>หุ้น</th><th>เงินสด+เงินลงทุน</th><th>หนี้รวม</th><th>Debt/Equity</th><th>ROIC</th><th>Gross margin</th><th>Op margin</th><th>Capex TTM</th><th>SBC TTM</th></tr>';
+for(const t of T){const b=X.bs[t];h+=`<tr><td><b>${t}</b></td><td>${f(b.cash,1)}</td><td>${f(b.debt,1)}</td><td>${f(b.debt/b.eq)}</td><td>${f(b.roic,1)}%</td><td>${f(b.gm,1)}%</td><td>${f(b.opm,1)}%</td><td>${f(b.capex,1)}</td><td>${f(b.sbc,1)}</td></tr>`}
+$('bstbl').innerHTML=h+'<tr><td colspan="9" class="muted" style="white-space:normal;text-align:left">USD พันล้าน · หนี้รวมรวมสัญญาเช่า · เงินลงทุนรวมเงินลงทุนระยะยาว (AMZN มีหุ้น Anthropic ซึ่งขายไม่ง่าย) · AAPL ส่วนทุนต่ำเพราะซื้อหุ้นคืนมาก D/E จึงดูสูง</td></tr>'})();
+
+// weights & scores
+const comps=[['vs','มูลค่า (Graham)','var(--s1)'],['q','คุณภาพธุรกิจ','var(--s2)'],['cf','กระแสเงินสด','var(--s3)'],['bs','หนี้/งบดุล','var(--s4)'],['core','ธุรกิจเดิมรองรับธุรกิจใหม่','var(--s5)']];
+(()=>{const why={vs:'ส่วนเผื่อความปลอดภัยคือสิ่งที่ทำให้ win/lose เอียงเข้าข้างเรา คำนวณจากสูตร: 10 คะแนนเมื่อ ราคา/มูลค่า ≤ 0.70, 0 คะแนนเมื่อ ≥ 2.0 (เส้นตรง)',q:'นักลงทุนระยะยาวได้ผลตอบแทนจาก ROIC ของธุรกิจในระยะยาวมากกว่าจากราคาซื้อ ดู ROIC, margin, moat, ความเสี่ยงถูกแย่งตลาด',cf:'กำไรต้องกลายเป็นเงินสดจริง ดู FCF ย้อนหลัง 5–6 ปี ความสม่ำเสมอ และภาระ capex AI ที่กำลังพุ่ง',bs:'Survivability — หนี้ต้องไม่บังคับให้บริษัท (หรือเรา) ต้องขายในจุดต่ำสุด',core:'เกณฑ์ของ Eak: ถ้าลงทุนธุรกิจใหม่ ต้องมีธุรกิจเดิมที่แข็งแรงและทำเงินสดพอจ่ายเองโดยไม่ต้องพึ่งหนี้'};
+let h='<tr><th>หมวด</th><th>น้ำหนัก</th><th style="text-align:left">เหตุผล</th></tr>';for(const [k,l] of comps)h+=`<tr><td>${l}</td><td><b>${W[k]}%</b></td><td style="text-align:left;white-space:normal;min-width:220px">${why[k]}</td></tr>`;$('wtbl').innerHTML=h;
+$('lg4').innerHTML=comps.map(([k,l,c])=>`<span><i style="background:${c}"></i>${l} (${W[k]}%)</span>`).join('');
+const svg=$('c4'),W0=900,rowH=40,top=10,left=150,right=60,H=top+byScore.length*rowH+26;svg.setAttribute('viewBox',`0 0 ${W0} ${H}`);const x=v=>left+v/10*(W0-left-right);
+for(const v of [0,2,4,6,8,10]){el('line',{x1:x(v),x2:x(v),y1:top,y2:H-22,stroke:'var(--grid)'},svg);el('text',{x:x(v),y:H-6,'text-anchor':'middle','font-size':12,fill:'var(--text-muted)'},svg,v)}
+el('line',{x1:x(7.5),x2:x(7.5),y1:top,y2:H-22,stroke:'var(--text-secondary)','stroke-dasharray':'4 4','stroke-width':1.5},svg);
+byScore.forEach((t,i)=>{const d=S[t],y=top+i*rowH+8;el('text',{x:left-10,y:y+16,'text-anchor':'end','font-size':14,'font-weight':600,fill:'var(--text-primary)'},svg,`${i+1}. ${t}`);let acc=0;
+for(const [k,l,c] of comps){const v=d[k]*W[k]/100;if(v<=0)continue;const r=el('rect',{x:x(acc)+(acc>0?1:0),y:y,width:Math.max(x(v)-x(0)-(acc>0?1:0)-1,1),height:22,rx:3,fill:c},svg);bindTip(r,`<b>${t} · ${l}</b><br>คะแนนดิบ ${f(d[k],1)}/10<br>× ${W[k]}% = ${f(v)}`);acc+=v}
+el('text',{x:x(acc)+6,y:y+16,'font-size':13,'font-weight':600,fill:'var(--text-primary)'},svg,f(d.total))});
+el('text',{x:x(7.5)+4,y:H-26,'font-size':11,fill:'var(--text-secondary)'},svg,'เกณฑ์ 7.5');
+let s='<tr><th>อันดับ</th><th>หุ้น</th>'+comps.map(([k,l])=>`<th>${l}<br>(${W[k]}%)</th>`).join('')+'<th>คะแนนรวม</th></tr>';
+byScore.forEach((t,i)=>{const d=S[t];s+=`<tr><td>${i+1}</td><td><b>${t}</b></td>`+comps.map(([k])=>`<td>${f(d[k],1)}</td>`).join('')+`<td><b>${f(d.total)}</b></td></tr>`});$('sctbl').innerHTML=s})();
+
+// Eak criteria
+(()=>{let h='<tr><th>หุ้น</th><th>ราคา ≤ ราคาซื้อ?</th><th>คะแนน ≥ 7.5?</th><th>ผล</th><th style="text-align:left">ควรทำอะไร</th></tr>';
+const act={NVDA:'ติดตามงบ 17 พ.ย. ถ้า EPS ยืนยัน ทยอยซื้อที่ ≤ $133–150 (ระหว่างราคาซื้อจาก EPS ย้อนหลังกับ EPS ล่วงหน้า)',MSFT:'ตั้งราคาเฝ้าที่ ~$340–390',GOOGL:'ตั้งราคาเฝ้าที่ ~$200–240 ใกล้รองจาก NVDA',META:'ตั้งราคาเฝ้าที่ ~$410–420',AAPL:'ธุรกิจดีแต่แพงมาก รอ (ราคาซื้อ ~$103–108)',AMZN:'รอให้ FCF กลับเป็นบวกก่อน ไม่ผ่านทั้งราคาและงบดุล',TSLA:'ไม่ผ่านเกณฑ์ ไม่เหมาะกับกรอบ Graham/70-30'};
+for(const t of byScore){const d=S[t],a=d.price<=d.buy,b=d.total>=7.5;const r=a&&b?['b-good','ผ่าน']:(b&&d.price<=d.V)?['b-warn','ผ่านครึ่งเดียว']:(b?['b-warn','ธุรกิจผ่าน ราคายังไม่ผ่าน']:['b-bad','ไม่ผ่าน']);
+h+=`<tr><td><b>${t}</b></td><td>${a?'✓':'✗'} ($${f(d.price,0)} vs $${f(d.buy,0)})</td><td>${b?'✓':'✗'} (${f(d.total)})</td><td><span class="badge ${r[0]}">${r[1]}</span></td><td style="text-align:left;white-space:normal;min-width:260px">${act[t]}</td></tr>`}$('eaktbl').innerHTML=h})();
+
+// per stock
+(()=>{let h='';byScore.forEach((t,i)=>{const d=S[t],n=N[t],[c,l]=status(d);h+=`<div class="card stock"><h3>${i+1}. ${d.name} (${t}) <span class="badge ${c}">${l}</span> <span class="muted">คะแนน ${f(d.total)}</span></h3>
+<p class="muted">ราคา $${f(d.price)} · มูลค่า Graham $${f(d.V)} · ราคาซื้อ $${f(d.buy)} · EPS ที่ใช้ $${f(d.eps)} · g ${f(d.g,1)}%</p>
+<dl><dt>คุณภาพธุรกิจ</dt><dd>${n.q}</dd><dt>กระแสเงินสด</dt><dd>${n.cfn}</dd><dt>หนี้/งบดุล</dt><dd>${n.bsn}</dd><dt>ธุรกิจเดิม vs ใหม่</dt><dd>${n.coren}</dd><dt>ความเสี่ยง</dt><dd>${n.risk}</dd><dt>สรุป</dt><dd><b>${n.verdict}</b></dd></dl></div>`});$('stocks').innerHTML=h})();
+</script>
+</body>
+</html>
