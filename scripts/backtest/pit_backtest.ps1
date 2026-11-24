@@ -1,8 +1,10 @@
-﻿# Point-in-time backtest of the two-tier buy rules (CLAUDE.md), Nov 2015 - Nov 2026.
+# Point-in-time backtest of the two-tier buy rules (CLAUDE.md), Nov 2015 - Nov 2026.
 # Uses only 10-K data whose "filed" date is on or before each decision date (no look-ahead),
 # on a universe fixed at the start (largest US companies around 2015), not picked with hindsight.
 # Run:  powershell -File pit_backtest.ps1   (writes ..\..\output\backtest_pit.json)
+param([double]$Mos = 0.30, [string]$OutJson = 'output\backtest_pit.json')   # margin of safety: buy when P/V <= 1 - Mos
 $ErrorActionPreference = 'Stop'
+$PVMAX = 1 - $Mos
 $root = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $data = Join-Path $root 'data'
 Add-Type -AssemblyName System.Web.Extensions
@@ -184,8 +186,8 @@ function Evaluate($t, $y) {
     $tot2 = 0.40 * $vs + 0.20 * $q + 0.15 * $cf + 0.15 * $bs + 0.10 * $core
     $res[$mode] = @{ Y = $Yl; V = $Vv; pv = $pv; tot1 = $tot1; tot2 = $tot2 }
   }
-  $t1 = ($null -ne $res.v2.pv) -and $res.v2.pv -le 0.70 -and $gate -and -not $flag
-  $t2 = (-not $t1) -and ($null -ne $res.v1.pv) -and $res.v1.pv -le 0.70 -and $res.v1.tot1 -ge 7.5 -and -not $flag
+  $t1 = ($null -ne $res.v2.pv) -and $res.v2.pv -le $PVMAX -and $gate -and -not $flag
+  $t2 = (-not $t1) -and ($null -ne $res.v1.pv) -and $res.v1.pv -le $PVMAX -and $res.v1.tot1 -ge 7.5 -and -not $flag
   return [ordered]@{ t = $t; y = $y; date = $D; fy = $last; price = $price; eps = $e3; g = $gg; cagr3 = $cagr; cagr5 = $cagr5; flag = $flag
     V = $res.v2.V; buy = if ($res.v2.V) { 0.7 * $res.v2.V } else { $null }; pv = $res.v2.pv; pvA = $res.v1.pv; yld = $res.v2.Y; aaa = $aaa
     opm = $opm; opSrc = $opSrc; roe = $roe; conv = $conv; fm = $fm; nd = $nd; netcash = (($debt - $cs) -le 0)
@@ -214,7 +216,7 @@ foreach ($y in $DECISION_YEARS) {
   $port = { param($n, $spx) $acc = $cash * $spx; foreach ($k in $w.Keys) { $acc += $w[$k] * ($yr | Where-Object { $_.t -eq $k })."r$n" }; $acc }
   $p1 = & $port 1 $sp1; $p3 = if ($null -ne $sp3) { & $port 3 $sp3 } else { $null }; $pN = & $port 'N' $spN
   # old single-score rule (v1): P/V<=0.7 with actual Aaa and 25/25/20/15/15 score >= 7.5, equal weight, else SPY
-  $old = @($yr | Where-Object { $null -ne $_.pvA -and $_.pvA -le 0.70 -and $_.tot1 -ge 7.5 })
+  $old = @($yr | Where-Object { $null -ne $_.pvA -and $_.pvA -le $PVMAX -and $_.tot1 -ge 7.5 })
   $o1 = if ($old.Count) { ($old | ForEach-Object { $_.r1 } | Measure-Object -Average).Average } else { $sp1 }
   $ew1 = ($yr | ForEach-Object { $_.r1 } | Measure-Object -Average).Average
   $v.tier += $v.tier[-1] * (1 + $p1); $v.spy += $v.spy[-1] * (1 + $sp1); $v.ew += $v.ew[-1] * (1 + $ew1); $v.v1 += $v.v1[-1] * (1 + $o1)
@@ -227,7 +229,7 @@ $rows = $A.rows; $years = $A.years; $v = $A.curve
 $out = [ordered]@{ T = $TICKERS; strict = $A; guard = $B }
 $json = $out | ConvertTo-Json -Depth 8 -Compress
 New-Item -ItemType Directory -Force (Join-Path $root 'output') | Out-Null
-[IO.File]::WriteAllText((Join-Path $root 'output\backtest_pit.json'), $json, (New-Object Text.UTF8Encoding $false))
+[IO.File]::WriteAllText((Join-Path $root $OutJson), $json, (New-Object Text.UTF8Encoding $false))
 foreach ($r in $rows) {
   '{0} {1,-5} fy {2} px {3,8:N2} eps {4,7:N2} g {5,5:N1} pv {6,5} q {7,4:N1} cf {8,4:N1} bs {9,4:N1} {10}{11} tier {12} r1 {13,6:P0}' -f $r.y, $r.t, $r.fy, $r.price, $r.eps, $r.g, $(if ($r.pv) { '{0:N2}' -f $r.pv } else { '-' }), $r.q, $r.cf, $r.bs, $(if ($r.gate) { 'G' } else { '.' }), $(if ($r.flag) { 'F' } else { '.' }), $r.tier, $r.r1
 }
