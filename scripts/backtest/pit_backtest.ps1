@@ -2,7 +2,7 @@
 # Uses only 10-K data whose "filed" date is on or before each decision date (no look-ahead),
 # on a universe fixed at the start (largest US companies around 2015), not picked with hindsight.
 # Run:  powershell -File pit_backtest.ps1   (writes ..\..\output\backtest_pit.json)
-param([double]$Mos = 0.30, [string]$OutJson = 'output\backtest_pit.json')   # margin of safety: buy when P/V <= 1 - Mos
+param([double]$Mos = 0.30, [string]$OutJson = 'output\backtest_pit.json', [int]$StartYear = 2015)   # margin of safety: buy when P/V <= 1 - Mos
 $ErrorActionPreference = 'Stop'
 $PVMAX = 1 - $Mos
 $root = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
@@ -13,7 +13,7 @@ function Load($p) { $s = New-Object System.Web.Script.Serialization.JavaScriptSe
 $inp = Load (Join-Path $data 'backtest_inputs.json')
 $TICKERS = 'AAPL','MSFT','GOOGL','AMZN','BRK','XOM','GE','JNJ','WFC','JPM'
 $PTMAP = @{ BRK = 'BRK-B' }
-$DECISION_YEARS = 2015..2025
+$DECISION_YEARS = $StartYear..2025
 $SPIN = @('GE|2023-01-04', 'GE|2024-04-02')   # spin-offs Yahoo records as splits: adjust price, not EPS
 
 # ---------- SEC point-in-time series ----------
