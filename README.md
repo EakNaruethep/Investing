@@ -1,41 +1,31 @@
 # Investing
 
-These are Eak's stock valuation reports, which use the revised Graham formula and the two-tier buy-signal rules. [CLAUDE.md](CLAUDE.md) describes the method.
+These are Eak's stock reports. They use the revised Graham formula and the two-tier buy-signal rules described in [CLAUDE.md](CLAUDE.md).
 
 ## Reports (`output/reports/`)
-- `2026-11-16-graham-mag7-valuation.html`: the main report, with buy signals for the Magnificent 7, TSMC and SpaceX. Signal status and checks A–D are at the top.
-- `back-test-10-yr.html`: a 10-year backtest (Nov 2016 – Nov 2026) of the two-tier rules.
-- `2026-11-18-graham-backtest-10y.html`: the 10-year backtest that compares v1, v2 and the two-tier rules.
-- `2026-11-18-graham-backtest-pit.html`: the point-in-time backtest (Nov 2015 – Nov 2026). It drops look-ahead and survivorship bias.
+There are only two reports:
+- `daily-report.html`: runs Tuesday–Sunday at 08:30 Thai time and checks price only (rule A). It compares each stock's latest traded price at that minute, including pre-market and after-hours, with its buy price. It is built by `scripts/dashboard/price_watch.py` from `data/watchlist.json`.
+- `weekly-report.html`: runs Monday at 20:30 Thai time and does the full review: EPS with one-offs removed, g, value and buy price, the quality gates, rule C and news for rule D. Its layout follows `archive/2026-11-24/2026-11-16-graham-mag7-valuation.html`. Each run copies the previous version to `archive/<date>/`.
 
-`archive/` holds earlier versions of the reports.
+All other reports, including the backtests, are kept in `archive/`.
 
-## Scripts (`scripts/backtest/`)
-`model2.py` holds the backtest model and its data. `tier.py` runs the two-tier backtest and writes `tier.json`, and `build_tier.py` builds `back-test-10-yr.html` from it. Run them from inside `scripts/backtest/`:
+## How the two reports connect
+1. The weekly report keeps its per-stock data in a `S={...}` block.
+2. `scripts/dashboard/build_watchlist.py` copies that data into `data/watchlist.json`.
+3. `data/d_holds.json` lists the stocks blocked by rule D.
+4. The daily report reads only `watchlist.json` and live prices, so it is cheap to run.
 
-```
-python3 tier.py && python3 build_tier.py
-```
-
-Much of the 2016–2021 data in that model was entered from memory, not pulled from a data source.
-
-### Point-in-time backtest (no Python needed)
-`2026-11-18-graham-backtest-pit.html` tests the two-tier rules for Nov 2015 – Nov 2026 on the 10 largest US companies of early 2015. It uses only SEC 10-K figures that were filed before each decision date, from `data/`. Run these from PowerShell:
+The cloud routines run on GitHub and follow `scripts/dashboard/daily_report_prompt.md` and `scripts/dashboard/weekly_review_prompt.md`. Eak's PC pulls this repository when it starts up.
 
 ```
-powershell -File scripts/backtest/pit_backtest.ps1
-powershell -File scripts/backtest/build_pit.ps1
+python3 scripts/dashboard/build_watchlist.py
+python3 scripts/dashboard/price_watch.py
 ```
 
-`pit_backtest.ps1` reads `data/sec`, `data/backtest_inputs.json` and writes `output/backtest_pit.json`. `build_pit.ps1` fills `pit_template.html` with that JSON.
+On Windows without Python, `price_watch.ps1` and `build_watchlist.ps1` do the same job.
 
-## Dashboards: daily prices and weekly full review (`scripts/dashboard/`)
-- **Weekly full review (uses Claude):** refresh the main valuation report: EPS with one-offs removed, g, quality gates, rule C, and news for rule D in `data/d_holds.json`. Then run `build_watchlist.ps1`, which copies each stock's value, buy price and gate results into `data/watchlist.json`.
-- **Daily price check (no Claude, no tokens):** `price_watch.ps1` fetches the latest prices from Yahoo and checks them against `data/watchlist.json`, which covers rule A only. It writes `output/dashboard/daily.html` and adds a row per stock to `data/price_history.csv`. It takes about 5 seconds. Pass `-CopyTo <folder>`, for example a OneDrive folder, to read the page on a phone.
-
-```
-powershell -File scripts/dashboard/build_watchlist.ps1
-powershell -File scripts/dashboard/price_watch.ps1
-```
+## Backtests (`scripts/backtest/`, reports in `archive/`)
+- `pit_backtest.ps1` + `build_pit.ps1`: the point-in-time backtest for Nov 2015 – Nov 2026. It uses only 10-K figures that were filed before each decision date. The raw SEC files in `data/sec/` are not committed; download them again when you need them.
+- `model2.py`, `tier.py`, `build_tier.py`: the earlier 10-year backtest. Much of its 2016–2021 data was entered from memory.
 
 Nothing in this repository is investment advice.

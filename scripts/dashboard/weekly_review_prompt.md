@@ -1,18 +1,27 @@
-Weekly full review of Eak's stock watchlist using the two-tier Graham buy rules. Work in D:\Workspace\Claude\Investing and follow CLAUDE.md there exactly (method, weights, rules A–D, answer in Thai). Use PowerShell; Python is not installed. This is analysis of a method, not investment advice, and never execute trades.
+# Weekly report (every Monday 20:30 Thai time)
 
-Stocks: AAPL, MSFT, GOOGL, AMZN, META, NVDA, TSLA, TSM (ADR, USD) and SpaceX (SPCX), the same set as the main report.
+Weekly full review of Eak's watchlist with the two-tier Graham buy rules. Work in the root of this repository and follow CLAUDE.md exactly (method, weights, rules A–D). Write the report in Thai. This analyses a method; it is not investment advice, and never execute trades.
+
+Stocks: AAPL, MSFT, GOOGL, AMZN, META, NVDA, TSLA, TSM (ADR, USD) and SpaceX (SPCX).
+
+**Every number must be the latest available when the run starts.** Prices are the last traded price at that minute, including pre-market and after-hours, with their time and session. Use Yahoo's chart API `range=1d&interval=1m&includePrePost=true` and take the last non-null close. Compute % change against the previous trading day's close from `range=1mo&interval=1d`. Do not use `meta.chartPreviousClose`. Use the latest financial statements and news.
 
 Steps
-1. Copy output\reports\2026-11-16-graham-mag7-valuation.html to archive\ with today's date in the name before changing it (for example archive\2026-11-16-graham-mag7-valuation-<yyyy-mm-dd>.html).
-2. Refresh the main report output\reports\2026-11-16-graham-mag7-valuation.html in place, keeping its layout and sections:
-   - latest closing prices; Moody's Aaa (latest monthly value from FRED series AAA); Y = max(Aaa, 4.4%)
-   - for any company that reported since the last review: TTM EPS with one-off items removed (explain each adjustment in the appendix), g = min(15%, 0.75 × 3-year growth), V = EPS × (8.5 + 2g) × 4.4 / Y, buy price = 0.70 V
-   - quality gates q, cf, bs from the latest 4 quarters; the old weighted score (25/25/20/15/15); rule C (EPS growth over 40%/yr on BOTH 3-year and 5-year CAGR, or a loss in the last 3 years)
-   - rule D: search the news for events whose probability cannot be judged (CEO leaving with no successor, licence-threatening lawsuits, etc.)
-   - keep the per-stock JavaScript data object "S={...}" with the same field names (name, price, eps, g, V, buy, pv, vs, q, cf, bs, total, total1, gate, gw, flag, fw, na, ...) and keep the text "Aaa ต.ค. <year> = <value>%" (use the month you actually used) and "ราคาปิด <date>", because scripts read them.
-3. Update data\d_holds.json: a JSON object {ticker: "Thai one-line reason"} listing only stocks currently blocked by rule D. Remove entries whose event is resolved.
-4. Run: powershell -NoProfile -ExecutionPolicy Bypass -File scripts\dashboard\build_watchlist.ps1
-   then: powershell -NoProfile -ExecutionPolicy Bypass -File scripts\dashboard\price_watch.ps1 -CopyTo "C:\Users\narue\OneDrive\Investing"
-   Check that data\watchlist.json lists every stock with V and buy prices that match the report.
-5. Copy the refreshed report to C:\Users\narue\OneDrive\Investing\graham-weekly.html so it can be read on a phone.
-6. Finish with a short Thai summary: any tier-1 or tier-2 signal, stocks within 10% of their buy price, changes since last week (buy prices, gates, rule C/D), and anything you could not verify. Do not change CLAUDE.md, the backtest scripts or files outside this folder and the OneDrive\Investing folder.
+1. Copy the current `output/reports/weekly-report.html` to `archive/<yyyy-mm-dd>/weekly-report.html` (use today's date).
+2. Write a new `output/reports/weekly-report.html`. Use the same layout, sections, charts and appendices as `archive/2026-11-24/2026-11-16-graham-mag7-valuation.html`, the reference format:
+   - Prices with their timestamps, and Moody's Aaa (latest monthly value of the FRED series AAA). Y = max(Aaa, 4.4%).
+   - TTM EPS with one-off items removed, explaining each adjustment in the appendix. g = min(15%, 0.75 × 3-year growth). V = EPS × (8.5 + 2g) × 4.4 / Y. Buy price = 0.70 V.
+   - Quality gates q, cf and bs from the latest 4 quarters, and the old weighted score (25/25/20/15/15).
+   - Rule C: EPS growth over 40%/yr on BOTH the 3-year and 5-year CAGR, or a loss in the last 3 years.
+   - Rule D: search the news for events whose probability cannot be judged.
+   - Keep the per-stock JavaScript data object `S={...}` with the same field names (name, price, eps, g, V, buy, pv, vs, q, cf, bs, total, total1, gate, gw, flag, fw, na, …). Keep the texts `Aaa ต.ค. <year> = <value>%` (use the month actually used) and `ราคาปิด <date and time>`, because scripts read them.
+3. Update `data/d_holds.json`. It is a JSON object `{ticker: "one-line Thai reason"}` listing only the stocks currently blocked by rule D.
+4. Run `python3 scripts/dashboard/build_watchlist.py`, then `python3 scripts/dashboard/price_watch.py`. Check that `data/watchlist.json` matches the report's values and buy prices.
+5. Commit everything you changed, with a short message, and push to `main`.
+6. Finish with a short Thai summary covering:
+   - any tier-1 or tier-2 signals
+   - stocks within 10% of their buy price
+   - changes since last week
+   - anything you could not verify
+
+Keep only these two reports in `output/reports/`: `daily-report.html` and `weekly-report.html`. Do not change CLAUDE.md or the backtest scripts.

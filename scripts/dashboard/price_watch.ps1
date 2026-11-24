@@ -1,5 +1,5 @@
 ﻿# Daily price check (no Claude, no tokens): compares today's prices with the buy prices from the
-# weekly full review (data/watchlist.json) and writes output/dashboard/daily.html.
+# weekly report (data/watchlist.json) and writes output/reports/daily-report.html. PC version of price_watch.py.
 # Usage: powershell -File scripts/dashboard/price_watch.ps1 [-CopyTo <folder>]   (e.g. a OneDrive folder to read it on the phone)
 param([string]$CopyTo = '')
 $ErrorActionPreference = 'Stop'
@@ -113,8 +113,8 @@ footer{color:var(--muted);font-size:.78rem}
 $now = (Get-Date).ToString('yyyy-MM-dd HH:mm')
 $html = @"
 <!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Graham Price Watch</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;600&family=IBM+Plex+Mono&display=swap"><style>$css</style></head><body><div class="wrap">
-<header><h1>เช็คราคารายวัน</h1><div class="sub">อัปเดต $now (เวลาไทย) · ราคาซื้อขายล่าสุด ณ นาทีที่รัน รวมช่วงก่อนตลาดเปิดและหลังตลาดปิด (Yahoo) · % เทียบราคาปิดวันก่อน · ราคาซื้อจากการทบทวนรายสัปดาห์ $($W.builtAt) (ราคาในรายงาน $($W.reportAsOf)) · Aaa $($aaa)%</div></header>
+<title>รายงานราคารายวัน</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;600&family=IBM+Plex+Mono&display=swap"><style>$css</style></head><body><div class="wrap">
+<header><h1>รายงานราคารายวัน</h1><div class="sub">อัปเดต $now (เวลาไทย) · ราคาซื้อขายล่าสุด ณ นาทีที่รัน รวมช่วงก่อนตลาดเปิดและหลังตลาดปิด (Yahoo) · % เทียบราคาปิดวันก่อน · ราคาซื้อจากการทบทวนรายสัปดาห์ $($W.builtAt) (ราคาในรายงาน $($W.reportAsOf)) · Aaa $($aaa)%</div></header>
 $banner$stale
 <div class="scroll"><table><thead><tr><th>หุ้น</th><th style="text-align:right">ราคา</th><th>1 เดือน</th><th style="text-align:right">ราคาซื้อ</th><th style="text-align:right">ต้องลงอีก</th><th style="text-align:right">ราคา/มูลค่า</th><th>สถานะ</th></tr></thead><tbody>
 $($trs -join "`n")
@@ -122,8 +122,7 @@ $($trs -join "`n")
 <footer>หน้านี้เช็คแค่ข้อ A (ราคา) ส่วนข้อ B, C, D ใช้ผลจากการทบทวนรายสัปดาห์ · ระดับ 2 ใช้ราคาซื้อที่คิดด้วย Aaa จริงและคะแนนเดิมที่ราคาวันนี้ · "ต้องลงอีก" = ราคาซื้อ ÷ ราคาวันนี้ − 1 · ไม่ใช่คำแนะนำการลงทุน</footer>
 </div></body></html>
 "@
-$dir = Join-Path $root 'output\dashboard'; New-Item -ItemType Directory -Force $dir | Out-Null
-$outFile = Join-Path $dir 'daily.html'
+$outFile = Join-Path $root 'output\reports\daily-report.html'
 [IO.File]::WriteAllText($outFile, $html, (New-Object Text.UTF8Encoding $false))
 if ($CopyTo) { Copy-Item $outFile (Join-Path $CopyTo 'graham-daily.html') -Force }
 foreach ($r in $rows) { '{0,-5} {1,9} {2,-8} {3}' -f $r.t, (fmt $r.price), $r.status, $r.why }
