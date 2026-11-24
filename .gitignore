@@ -1,0 +1,4 @@
+﻿tier.json
+__pycache__/
+# raw SEC companyfacts downloads (~50 MB); re-download when needed
+data/sec/

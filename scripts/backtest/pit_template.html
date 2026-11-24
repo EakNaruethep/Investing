@@ -1,0 +1,247 @@
+<title>Graham Backtest Point-in-Time</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column (max 1040px); summary tiles, then chart, yearly ledger, signal grid, method notes */
+:root{
+  --bg:#f6f7f9; --surface:#ffffff; --ink:#1b2430; --muted:#5b6675; --line:#dde2e9;
+  --accent:#1d5fa8; --accent-soft:#dbe7f5; --t2:#b7791f; --t2-soft:#f6e9d2; --flag:#9aa3af; --flag-soft:#eceff3;
+  --good:#1f7a4d; --bad:#b42318; --spy:#7a8594; --ew:#7b5ea7; --guard:#5fa0e0;
+  --f-body:"IBM Plex Sans Thai","Noto Sans Thai","Leelawadee UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#11161d; --surface:#18202a; --ink:#e6ebf1; --muted:#9aa6b5; --line:#2a3542;
+  --accent:#6aa8ec; --accent-soft:#1d3550; --t2:#e0a84a; --t2-soft:#3d3020; --flag:#6b7684; --flag-soft:#222b36;
+  --good:#4cc38a; --bad:#f07067; --spy:#9aa6b5; --ew:#b69ae0; --guard:#9cc8f2; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#11161d; --surface:#18202a; --ink:#e6ebf1; --muted:#9aa6b5; --line:#2a3542;
+  --accent:#6aa8ec; --accent-soft:#1d3550; --t2:#e0a84a; --t2-soft:#3d3020; --flag:#6b7684; --flag-soft:#222b36;
+  --good:#4cc38a; --bad:#f07067; --spy:#9aa6b5; --ew:#b69ae0; --guard:#9cc8f2; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.65}
+.wrap{max-width:1040px;margin:0 auto;padding-block:28px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:36px}
+h1{font-size:1.9rem;line-height:1.25;margin:0;text-wrap:balance;font-weight:700}
+h2{font-size:1.25rem;margin:0 0 12px;text-wrap:balance;font-weight:600}
+p{margin:0;max-width:70ch}
+.eyebrow{font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.lede{color:var(--muted);font-size:1.02rem}
+.num,td.n,.tile b{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.tile span{color:var(--muted);font-size:.85rem}
+.tile b{font-size:1.5rem;font-weight:500}
+.tile small{color:var(--muted);font-size:.82rem}
+.callout{border-left:3px solid var(--accent);padding:4px 0 4px 14px;display:flex;flex-direction:column;gap:6px}
+.chart{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px}
+.chart svg{display:block;width:100%;height:auto}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:.85rem;color:var(--muted);padding:4px 6px 0}
+.legend i{display:inline-block;width:18px;height:3px;border-radius:2px;vertical-align:middle;margin-right:6px}
+.scroll{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.88rem}
+th,td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;white-space:nowrap}
+th{color:var(--muted);font-weight:600;font-size:.8rem;background:var(--surface);position:sticky;top:0}
+td.n,th.n{text-align:right}
+tr:last-child td{border-bottom:0}
+.pos{color:var(--good)} .neg{color:var(--bad)}
+.chip{display:inline-block;padding:0 7px;border-radius:999px;font-size:.78rem;margin:1px 3px 1px 0;font-weight:500}
+.c1{background:var(--accent-soft);color:var(--accent)} .c2{background:var(--t2-soft);color:var(--t2)} .c0{background:var(--flag-soft);color:var(--muted)}
+.grid td{text-align:center;font-family:var(--f-mono);font-size:.8rem;padding:6px 4px;min-width:52px}
+.grid td.tk{text-align:left;font-family:var(--f-body);font-weight:600}
+.g1{background:var(--accent);color:var(--surface)} .g2{background:var(--t2-soft);color:var(--t2);font-weight:600}
+.gf{color:var(--flag);text-decoration:line-through} .gx{color:var(--muted)}
+.keys{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:.82rem;color:var(--muted);margin-top:8px}
+.keys span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:14px;height:14px;border-radius:3px;display:inline-block;border:1px solid var(--line)}
+ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:6px;max-width:75ch}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px}
+.two>div{min-width:0;display:flex;flex-direction:column;gap:8px}
+h3{font-size:1rem;margin:0;font-weight:600}
+footer{color:var(--muted);font-size:.82rem}
+</style>
+
+<div class="wrap">
+  <header style="display:flex;flex-direction:column;gap:10px">
+    <div class="eyebrow">Backtest · กติกาสัญญาณซื้อ 2 ระดับ · พ.ย. 2015 – พ.ย. 2026</div>
+    <h1>ทดสอบย้อนหลังโดยตัด look-ahead และ survivorship bias</h1>
+    <p class="lede" id="lede"></p>
+  </header>
+
+  <section class="tiles" id="tiles"></section>
+
+  <section class="callout" id="verdict"></section>
+
+  <section>
+    <h2>มูลค่าพอร์ต เริ่ม 100 (ผลตอบแทนรวมเงินปันผล)</h2>
+    <div class="chart"><svg id="curve" viewBox="0 0 960 360" role="img" aria-label="กราฟมูลค่าพอร์ตเทียบ S&P 500"></svg>
+      <div class="legend" id="legend"></div></div>
+  </section>
+
+  <section>
+    <h2>แต่ละปี: หุ้นที่ได้สัญญาณ และผล 1 ปี / 3 ปี</h2>
+    <div class="scroll"><table id="yearly"></table></div>
+    <p class="lede" style="margin-top:8px;font-size:.88rem">ระดับ 1 ได้น้ำหนัก 1 ส่วน ระดับ 2 ได้ 1/3 ส่วน ส่วนที่เหลืออยู่ใน S&amp;P 500 (SPY) ถ้ารวมเกิน 1 ส่วนจะแบ่งตามสัดส่วน ถือ 1 ปีแล้วจัดใหม่ทุกกลาง พ.ย.</p>
+  </section>
+
+  <section>
+    <h2>P/V ของหุ้นแต่ละตัวในแต่ละปี</h2>
+    <div class="scroll"><table class="grid" id="grid"></table></div>
+    <div class="keys">
+      <span><i class="sw g1"></i>ระดับ 1 (ซื้อเต็ม)</span>
+      <span><i class="sw g2"></i>ระดับ 2 (ซื้อ 1/3)</span>
+      <span><span class="gf">0.45</span> ข้อ C กันไว้ (EPS โตเร็วเกิน หรือขาดทุนใน 3 ปี)</span>
+      <span><span class="gx">–</span> EPS ติดลบ ใช้สูตรไม่ได้</span>
+      <span>ตัวเลข = ราคา ÷ มูลค่า Graham โดยใช้ Y = max(Aaa, 4.4%) · ระดับ 2 วัดด้วย Aaa จริงจึงอาจผ่านแม้ตัวเลขในช่องเกิน 0.70 · ชี้ที่ช่องเพื่อดูรายละเอียด</span>
+    </div>
+  </section>
+
+  <section>
+    <h2>ผลของแต่ละสัญญาณ</h2>
+    <div class="scroll"><table id="sigstats"></table></div>
+  </section>
+
+  <section class="two">
+    <div>
+      <h2>ตัด bias อะไรออกไปบ้าง</h2>
+      <ul id="fixed"></ul>
+    </div>
+    <div>
+      <h2>ข้อจำกัดที่ยังเหลือ</h2>
+      <ul id="limits"></ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>เทียบกับ backtest เดิม (Mag 7 + TSMC)</h2>
+    <div class="scroll"><table id="compare"></table></div>
+  </section>
+
+  <footer>จัดทำ 18 พ.ย. 2026 · ข้อมูล: SEC EDGAR companyfacts (10-K), ราคา Yahoo Finance, Moody's Aaa จาก FRED · สคริปต์ <span class="num">scripts/backtest/pit_backtest.ps1</span> · ไม่ใช่คำแนะนำการลงทุน</footer>
+</div>
+
+<script>
+const D = /*DATA*/null;
+const S = D.strict, G = D.guard, YRS = S.years.map(y => y.y);
+const pct = (x, d = 0) => x == null ? '–' : (x >= 0 ? '+' : '') + (x * 100).toFixed(d) + '%';
+const cls = x => x == null ? '' : (x >= 0 ? 'pos' : 'neg');
+const cagr = v => Math.pow(v[v.length - 1] / 100, 1 / (v.length - 1)) - 1;
+const mdd = v => { let pk = v[0], m = 0; for (const x of v) { pk = Math.max(pk, x); m = Math.min(m, x / pk - 1); } return m; };
+const NAMES = {AAPL:'Apple',MSFT:'Microsoft',GOOGL:'Alphabet',AMZN:'Amazon',BRK:'Berkshire',XOM:'ExxonMobil',GE:'GE',JNJ:'J&J',WFC:'Wells Fargo',JPM:'JPMorgan'};
+const el = (id) => document.getElementById(id);
+
+const cv = S.curve, cg = G.curve;
+const beat1 = S.years.filter(y => y.p1 > y.sp1).length;
+const coh = S.years.filter(y => y.p3 != null), beat3 = coh.filter(y => y.p3 > y.sp3).length;
+const sigs = S.rows.filter(r => r.tier > 0).map(r => { const y = S.years.find(x => x.y === r.y); return {...r, sp1: y.sp1, sp3: y.sp3}; });
+const sigsG = G.rows.filter(r => r.tier > 0);
+
+el('lede').textContent = `จำลองการตัดสินใจ 11 ครั้ง ทุกกลาง พ.ย. ตั้งแต่ปี 2015 ถึง 2025 กับ 10 บริษัทที่ใหญ่ที่สุดในสหรัฐฯ ช่วงต้นปี 2015 (ไม่ได้เลือกจากผลลัพธ์ภายหลัง) ใช้เฉพาะตัวเลขจากงบ 10-K ที่ยื่นต่อ SEC ก่อนวันตัดสินใจ ราคาจริงในวันนั้น และ Aaa เดือน ต.ค. ของปีนั้น แล้ววัดผลถึง พ.ย. 2026`;
+
+el('tiles').innerHTML = [
+  ['กติกา 2 ระดับ', cv.tier, `โตเฉลี่ย ${pct(cagr(cv.tier),1)}/ปี · drawdown สูงสุด (รายปี) ${pct(mdd(cv.tier))}`],
+  ['S&P 500 (SPY)', cv.spy, `โตเฉลี่ย ${pct(cagr(cv.spy),1)}/ปี · drawdown สูงสุด ${pct(mdd(cv.spy))}`],
+  ['ถือทั้ง 10 ตัวเท่ากัน', cv.ew, `โตเฉลี่ย ${pct(cagr(cv.ew),1)}/ปี · ตัววัดว่ากติกาช่วยเลือกได้จริงไหม`],
+  ['กติกา 2 ระดับ + ตัด one-off', cg.tier, `โตเฉลี่ย ${pct(cagr(cg.tier),1)}/ปี · จำกัด EPS ไม่เกิน 1.5× ค่ากลาง 3 ปีก่อน`],
+].map(([k, v, s]) => `<div class="tile"><span>${k}</span><b>100 → ${Math.round(v[v.length - 1])}</b><small>${s}</small></div>`).join('');
+
+const t1 = sigs.filter(s => s.tier === 1), t2 = sigs.filter(s => s.tier === 2);
+const gone = sigs.filter(s => !sigsG.some(g => g.t === s.t && g.y === s.y)).map(s => `${s.t} ${s.y}`);
+const b3 = a => a.filter(s => s.r3 != null && s.r3 > s.sp3).length, n3 = a => a.filter(s => s.r3 != null).length;
+el('verdict').innerHTML = `
+  <h3>สรุป</h3>
+  <p>กติกา 2 ระดับยังชนะ S&amp;P 500 เมื่อทดสอบแบบไม่ใช้ข้อมูลอนาคต: ${pct(cagr(cv.tier),1)}/ปี เทียบ ${pct(cagr(cv.spy),1)}/ปี และชนะใน ${beat1} จาก 11 ปี · ถือครบ 3 ปีชนะ ${beat3} จาก ${coh.length} รุ่น</p>
+  <p>แต่ส่วนหนึ่งมาจากกลุ่มหุ้นเอง: ถือทั้ง 10 ตัวเท่ากันก็ได้ ${pct(cagr(cv.ew),1)}/ปี ส่วนที่กติกาเพิ่มให้จริงจึงประมาณ ${((cagr(cv.tier)-cagr(cv.ew))*100).toFixed(1)} จุดต่อปี ถ้าจำกัด EPS แบบหยาบเพื่อกันกำไรพิเศษ จะเหลือ ${((cagr(cg.tier)-cagr(cv.ew))*100).toFixed(1)} จุด แต่วิธีนี้ตัดสัญญาณที่ดีออกไปด้วย (${gone.join(', ') || 'ไม่มี'}) เพราะปีก่อนหน้ากำไรถูกกดด้วยรายการพิเศษภาษีปี 2017 ตัวเลขนี้จึงเป็นกรอบล่าง ส่วนที่กติกาเพิ่มให้จริงน่าจะอยู่ระหว่าง 2 ถึง 5 จุดต่อปี</p>
+  <p>สัญญาณระดับ 1 ถือ 3 ปีชนะ S&amp;P ${b3(t1)}/${n3(t1)} ครั้ง ระดับ 2 ชนะ ${b3(t2)}/${n3(t2)} ครั้ง เทียบ backtest เดิมที่ได้ 9/9 และ 8/11 จากข้อมูลความจำและหุ้นที่รู้แล้วว่าชนะ</p>`;
+
+// ---- curve chart ----
+(function () {
+  const W = 960, H = 360, L = 52, R = 70, T = 16, B = 34;
+  const series = [
+    {k: 'กติกา 2 ระดับ', v: cv.tier, c: 'var(--accent)', w: 3},
+    {k: 'กติกา 2 ระดับ + ตัด one-off', v: cg.tier, c: 'var(--guard)', w: 2, dash: '6 4'},
+    {k: 'ถือ 10 ตัวเท่ากัน', v: cv.ew, c: 'var(--ew)', w: 2},
+    {k: 'S&P 500 (SPY)', v: cv.spy, c: 'var(--spy)', w: 2},
+  ];
+  const xs = [...YRS, 2026], max = Math.max(...series.flatMap(s => s.v)), top = Math.ceil(max / 200) * 200;
+  const x = i => L + i * (W - L - R) / (xs.length - 1), y = v => T + (H - T - B) * (1 - v / top);
+  let g = '';
+  for (let v = 0; v <= top; v += 200) g += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${L - 8}" y="${y(v) + 4}" text-anchor="end" font-size="12" fill="var(--muted)" font-family="var(--f-mono)">${v}</text>`;
+  xs.forEach((yr, i) => g += `<text x="${x(i)}" y="${H - 10}" text-anchor="middle" font-size="12" fill="var(--muted)" font-family="var(--f-mono)">${String(yr).slice(2)}</text>`);
+  for (const s of series) {
+    g += `<polyline fill="none" stroke="${s.c}" stroke-width="${s.w}" ${s.dash ? `stroke-dasharray="${s.dash}"` : ''} stroke-linejoin="round" points="${s.v.map((v, i) => x(i) + ',' + y(v)).join(' ')}"/>`;
+    const lv = s.v[s.v.length - 1];
+    g += `<circle cx="${x(xs.length - 1)}" cy="${y(lv)}" r="3.5" fill="${s.c}"/>`;
+  }
+  // end labels, nudged apart
+  const ends = series.map(s => ({c: s.c, v: s.v[s.v.length - 1], yy: y(s.v[s.v.length - 1])})).sort((a, b) => a.yy - b.yy);
+  for (let i = 1; i < ends.length; i++) if (ends[i].yy - ends[i - 1].yy < 15) ends[i].yy = ends[i - 1].yy + 15;
+  for (const e of ends) g += `<text x="${x(xs.length - 1) + 8}" y="${e.yy + 4}" font-size="12" fill="${e.c}" font-family="var(--f-mono)">${Math.round(e.v)}</text>`;
+  el('curve').innerHTML = g;
+  el('legend').innerHTML = series.map(s => `<span><i style="background:${s.c}"></i>${s.k} · ${pct(cagr(s.v), 1)}/ปี</span>`).join('') + '<span>แกนนอน = กลาง พ.ย. ของปี (20xx)</span>';
+})();
+
+// ---- yearly table ----
+(function () {
+  let h = '<thead><tr><th>ปี</th><th class="n">Aaa</th><th>สัญญาณ (น้ำหนัก)</th><th class="n">ใน SPY</th><th class="n">พอร์ต 1 ปี</th><th class="n">SPY 1 ปี</th><th class="n">พอร์ต 3 ปี</th><th class="n">SPY 3 ปี</th></tr></thead><tbody>';
+  for (const y of S.years) {
+    const rows = S.rows.filter(r => r.y === y.y && r.tier > 0);
+    const chips = rows.length ? rows.map(r => `<span class="chip c${r.tier}">${r.t} ${Math.round(y.w[r.t] * 100)}%</span>`).join('') : '<span class="chip c0">ไม่มีสัญญาณ</span>';
+    h += `<tr><td class="n">${y.y}</td><td class="n">${y.aaa.toFixed(2)}%</td><td>${chips}</td><td class="n">${Math.round(y.cash * 100)}%</td>
+      <td class="n ${cls(y.p1 - y.sp1)}">${pct(y.p1)}</td><td class="n">${pct(y.sp1)}</td>
+      <td class="n ${y.p3 == null ? '' : cls(y.p3 - y.sp3)}">${pct(y.p3)}</td><td class="n">${pct(y.sp3)}</td></tr>`;
+  }
+  el('yearly').innerHTML = h + '</tbody>';
+})();
+
+// ---- P/V grid ----
+(function () {
+  let h = '<thead><tr><th>หุ้น</th>' + YRS.map(y => `<th class="n">${y}</th>`).join('') + '</tr></thead><tbody>';
+  for (const t of D.T) {
+    h += `<tr><td class="tk">${t}<br><span style="font-weight:400;color:var(--muted);font-size:.75rem">${NAMES[t]}</span></td>`;
+    for (const y of YRS) {
+      const r = S.rows.find(r => r.t === t && r.y === y);
+      const tip = `${t} พ.ย. ${y} · งบปี ${r.fy}\nราคา ${r.price.toFixed(2)} · EPS ${r.eps.toFixed(2)} · g ${r.g == null ? '–' : r.g.toFixed(1)}%\nมูลค่า V ${r.V ? r.V.toFixed(0) : '–'} · ราคาซื้อ 0.7V ${r.buy ? r.buy.toFixed(0) : '–'}\nP/V ด้วย Aaa จริง ${r.pvA == null ? '–' : r.pvA.toFixed(2)} · คะแนนน้ำหนักเดิม ${r.tot1.toFixed(1)}\nq ${r.q.toFixed(1)} · cf ${r.cf.toFixed(1)} · bs ${r.bs.toFixed(1)} · ${r.gate ? 'ผ่านด่านคุณภาพ' : 'ไม่ผ่านด่านคุณภาพ'}${r.flag ? ' · ข้อ C กันไว้' : ''}\nผล 1 ปี ${pct(r.r1)}${r.r3 != null ? ' · 3 ปี ' + pct(r.r3) : ''}`;
+      const c = r.pv == null ? 'gx' : r.tier === 1 ? 'g1' : r.tier === 2 ? 'g2' : r.flag ? 'gf' : '';
+      h += `<td class="${c}" title="${tip.replace(/"/g, '&quot;')}">${r.pv == null ? '–' : r.pv.toFixed(2)}</td>`;
+    }
+    h += '</tr>';
+  }
+  el('grid').innerHTML = h + '</tbody>';
+})();
+
+// ---- signal stats ----
+(function () {
+  const med = a => { if (!a.length) return null; const s = [...a].sort((x, y) => x - y), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
+  const st = a => { const a3 = a.filter(s => s.r3 != null); return [a.length, `${a.filter(s => s.r1 > s.sp1).length}/${a.length}`, a.filter(s => s.r1 < 0).length,
+    `${a3.filter(s => s.r3 > s.sp3).length}/${a3.length}`, `${a3.filter(s => s.r3 > 0).length}/${a3.length}`, pct(med(a3.map(s => s.r3 - s.sp3))), pct(Math.min(...a.map(s => s.r1)))]; };
+  let h = '<thead><tr><th>กลุ่ม</th><th class="n">จำนวน / P/V</th><th class="n">ชนะ SPY 1 ปี</th><th class="n">ติดลบปีแรก</th><th class="n">ชนะ SPY 3 ปี</th><th class="n">บวกใน 3 ปี</th><th class="n">ส่วนต่างมัธยฐาน 3 ปี</th><th class="n">แย่สุดปีแรก</th></tr></thead><tbody>';
+  for (const [k, a] of [['ระดับ 1', t1], ['ระดับ 2', t2], ['รวม', sigs]]) h += `<tr><td>${k}</td>${st(a).map(v => `<td class="n">${v}</td>`).join('')}</tr>`;
+  h += '</tbody>';
+  h += '<tbody><tr><th colspan="8">รายการสัญญาณทั้งหมด</th></tr>' + sigs.map(s => `<tr><td>${s.y} · <span class="chip c${s.tier}">${s.t} ระดับ ${s.tier}</span></td><td class="n">P/V ${(s.tier === 1 ? s.pv : s.pvA).toFixed(2)}</td><td class="n ${cls(s.r1 - s.sp1)}">${pct(s.r1)}</td><td class="n">SPY ${pct(s.sp1)}</td><td class="n ${s.r3 == null ? '' : cls(s.r3 - s.sp3)}">${pct(s.r3)}</td><td class="n">SPY ${pct(s.sp3)}</td><td class="n" colspan="2">${s.epsSrc === 'reported' ? '' : 'EPS = กำไร ÷ จำนวนหุ้น'}</td></tr>`).join('') + '</tbody>';
+  el('sigstats').innerHTML = h;
+})();
+
+el('fixed').innerHTML = [
+  'ไม่ใช้ข้อมูลอนาคต: ทุกตัวเลขงบมาจาก 10-K ที่วันยื่น (filed) อยู่ก่อนวันตัดสินใจ ถ้ามีการแก้ตัวเลขย้อนหลังภายหลัง จะใช้ฉบับที่รู้ ณ วันนั้น',
+  'ไม่เลือกหุ้นจากผลลัพธ์: ใช้ 10 บริษัทใหญ่สุดช่วงต้นปี 2015 ซึ่งรวมตัวที่แย่ภายหลังด้วย (GE, ExxonMobil, Wells Fargo) แทน Mag 7 ที่รู้แล้วว่าชนะ',
+  'ข้อมูลจากแหล่งจริง: SEC EDGAR แทนตัวเลขจากความจำของ backtest เดิม ช่วงทดสอบเริ่มปี 2015 เพราะมีงบย้อนหลังครบ 5 ปีขึ้นไป และราคามีครบทุกปี',
+  'ราคาและ EPS อยู่บนฐานจำนวนหุ้นเดียวกัน ณ วันนั้น (ปรับ split ที่เกิดหลังวันยื่นงบ) เพื่อไม่ให้ split ทำให้ P/V เพี้ยน',
+  'ผลตอบแทนทั้งหุ้นและ SPY รวมเงินปันผล (adjusted close) จึงเทียบกันได้ตรง',
+].map(s => `<li>${s}</li>`).join('');
+el('limits').innerHTML = [
+  'ไม่ได้ตัดรายการพิเศษตามกติกา เพราะต้องใช้วิจารณญาณ จึงแสดงอีกแบบที่จำกัด EPS ล่าสุดไม่เกิน 1.5 เท่าของค่ากลาง 3 ปีก่อนหน้าแทน วิธีนี้หยาบ: J&J ปี 2024 (กำไรจากแยก Kenvue) และ Berkshire (กำไรจากราคาหุ้นในพอร์ต) ยังผ่านอยู่ แต่ Microsoft และ Alphabet ถูกตัดออกทั้งที่กำไรโตจริง',
+  'ใช้งบปีล่าสุดเท่านั้น (ไม่ใช้ 10-Q) ตัวเลขอาจช้ากว่าความจริงสูงสุดราว 10 เดือน สำหรับบริษัทที่ปิดงบเดือน ธ.ค.',
+  'ข้อ D (ข่าวสำคัญ) และกฎขาย (ไม่ผ่านด่าน 2 ไตรมาสติด, ถือขั้นต่ำ 3 ปี) ทดสอบอัตโนมัติไม่ได้ จำลองเป็นจัดพอร์ตใหม่ทุกปี',
+  'ธนาคาร (WFC, JPM) และ Berkshire: กระแสเงินสดและหนี้ไม่มีความหมายแบบบริษัททั่วไป ตัวเลข cf และ bs จึงแกว่งมาก ส่วน Alphabet ปี 2015–16 และ Berkshire หลังปี 2014 ไม่มี EPS แยกใน SEC จึงคำนวณจากกำไร ÷ จำนวนหุ้นของปีใกล้ที่สุด',
+  'มีหุ้นแค่ 10 ตัวและ 11 ปีซึ่งเป็นตลาดขาขึ้นเกือบทั้งช่วง ผลจึงยังแกว่งตามหุ้นไม่กี่ตัว (โดยเฉพาะ Apple ปี 2015–2017) ไม่ได้รวมค่าธรรมเนียมและภาษี',
+].map(s => `<li>${s}</li>`).join('');
+
+el('compare').innerHTML = `<thead><tr><th></th><th>backtest เดิม</th><th>backtest นี้</th></tr></thead><tbody>
+  <tr><td>หุ้น</td><td>Mag 7 + TSMC (รู้แล้วว่าชนะ)</td><td>10 ตัวใหญ่สุด ณ ต้นปี 2015</td></tr>
+  <tr><td>ข้อมูลงบ</td><td>2016–2021 จากความจำ</td><td>10-K จาก SEC ที่ยื่นก่อนวันตัดสินใจ</td></tr>
+  <tr><td>ช่วงเวลา</td><td>พ.ย. 2016 – พ.ย. 2026 (10 ปี)</td><td>พ.ย. 2015 – พ.ย. 2026 (11 ปี)</td></tr>
+  <tr><td>โตเฉลี่ยต่อปี</td><td class="num">23.6% เทียบ S&amp;P 13.2% (ไม่รวมปันผล)</td><td class="num">${pct(cagr(cv.tier),1).slice(1)} เทียบ SPY ${pct(cagr(cv.spy),1).slice(1)} (รวมปันผล)</td></tr>
+  <tr><td>ระดับ 1 ถือ 3 ปีชนะ S&amp;P</td><td class="num">9/9</td><td class="num">${b3(t1)}/${n3(t1)}</td></tr>
+  <tr><td>ระดับ 2 ถือ 3 ปีชนะ S&amp;P</td><td class="num">8/11</td><td class="num">${b3(t2)}/${n3(t2)}</td></tr>
+  <tr><td>drawdown สูงสุด (รายปี)</td><td class="num">-32%</td><td class="num">${pct(mdd(cv.tier))}</td></tr></tbody>`;
+</script>
