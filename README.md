@@ -4,8 +4,8 @@ These are Eak's stock reports. They use the revised Graham formula and the two-t
 
 ## Reports (`output/reports/`)
 There are only two reports:
-- `daily-report.html`: runs Tuesday–Sunday at 08:30 Thai time and checks price only (rule A). It compares each stock's latest traded price at that minute, including pre-market and after-hours, with its buy price. It is built by `scripts/dashboard/price_watch.py` from `data/watchlist.json`.
-- `weekly-report.html`: runs Monday at 20:30 Thai time and does the full review: EPS with one-offs removed, g, value and buy price, the quality gates, rule C and news for rule D. Its layout follows `archive/2026-11-24/2026-11-16-graham-mag7-valuation.html`. Each run copies the previous version to `archive/<date>/`.
+- `daily-report.html`: runs Tuesday–Saturday at 08:30 Thai time and checks price only (rule A). It compares each stock's latest traded price at that minute, including pre-market and after-hours, with its buy price. It is built by `scripts/dashboard/price_watch.py` from `data/watchlist.json`.
+- `weekly-report.html`: runs Monday at 08:30 Thai time and does the full review: EPS with one-offs removed, g, value and buy price, the quality gates, rule C and news for rule D. Its layout follows `archive/2026-11-24/2026-11-16-graham-mag7-valuation.html`. Each run copies the previous version to `archive/<date>/`.
 
 All other reports, including the backtests, are kept in `archive/`.
 
