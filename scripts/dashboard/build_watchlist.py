@@ -7,7 +7,7 @@ import json, os, re, sys
 from datetime import datetime, timedelta, timezone
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-YAHOO = {'SPCX': None}   # SpaceX: no Yahoo quote yet -> the daily report skips it
+YAHOO = {}   # ticker -> Yahoo symbol when they differ
 
 
 def main():

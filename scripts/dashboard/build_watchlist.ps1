@@ -21,7 +21,7 @@ $asOf = [regex]::Match($h, 'ราคาปิด ([^·<]+)').Groups[1].Value.Tr
 $holdsPath = Join-Path $root 'data\d_holds.json'
 $holds = if (Test-Path $holdsPath) { Get-Content $holdsPath -Raw -Encoding UTF8 | ConvertFrom-Json } else { [pscustomobject]@{} }
 
-$yahoo = @{ SPCX = $null }   # SpaceX: no listed Yahoo quote yet -> skipped by the daily check
+$yahoo = @{}   # ticker -> Yahoo symbol when they differ
 $list = @()
 foreach ($p in $S.PSObject.Properties) {
   $x = $p.Value; $t = $p.Name

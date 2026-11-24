@@ -175,7 +175,7 @@
                    },
                    {
                        "t":  "SPCX",
-                       "yahoo":  null,
+                       "yahoo":  "SPCX",
                        "name":  "SpaceX",
                        "V":  null,
                        "buy":  null,
