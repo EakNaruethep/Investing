@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>เช็คราคาซื้อรายวัน</title>
+<style>
+:root{--bg:#f7f7f5;--card:#fff;--tx:#1d1d1b;--m:#6b6b66;--line:#e2e2dd;--good:#1f7a4d;--goodbg:#e3f4ea;--warn:#9a6700;--warnbg:#fff4d6}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#171715;--card:#22221f;--tx:#eee;--m:#9a9a92;--line:#38382f;--good:#6fd39c;--goodbg:#1f3a2b;--warn:#f0c15a;--warnbg:#3a3118}}
+:root[data-theme="dark"]{--bg:#171715;--card:#22221f;--tx:#eee;--m:#9a9a92;--line:#38382f;--good:#6fd39c;--goodbg:#1f3a2b;--warn:#f0c15a;--warnbg:#3a3118}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.6 system-ui,sans-serif}
+main{max-width:760px;margin:auto;padding:16px} h1{font-size:20px;margin:4px 0}
+.m{color:var(--m);font-size:13px} .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;margin:12px 0}
+table{width:100%;border-collapse:collapse;font-size:14px} th,td{border-bottom:1px solid var(--line);padding:6px;text-align:right}
+th:first-child,td:first-child{text-align:left} th{color:var(--m);font-weight:600}
+.hit{background:var(--goodbg);color:var(--good);font-weight:700} .near{background:var(--warnbg);color:var(--warn)}
+</style></head><body><main>
+<h1>เช็คราคาซื้อรายวัน (เฉพาะราคา)</h1>
+<p class="m" id="asof"></p>
+<div class="card"><div id="sum"></div></div>
+<div class="card"><table><thead><tr><th>หุ้น</th><th>ราคา</th><th>ราคาซื้อ</th><th>ห่าง</th></tr></thead><tbody id="tb"></tbody></table>
+<p class="m">หน้านี้ใช้เฉพาะราคาปิดกับราคาซื้อ (0.7V) ที่คำนวณไว้ตอนรายงานเต็ม ไม่คำนวณมูลค่าใหม่ ถ้าราคาถึงซื้อหรือห่างไม่เกิน 10% จะขึ้นสี</p></div>
+</main>
+<script id="data" type="application/json">[{"t": "NVDA", "p": 125.53, "d": "20 พ.ย. ปิด", "b": 160.82, "q": false}, {"t": "TSM", "p": 363.23, "d": "23 พ.ย. ระหว่างวัน", "b": 280.95, "q": true}, {"t": "MSFT", "p": 484.52, "d": "20 พ.ย. ปิด", "b": 339.46, "q": true}, {"t": "GOOGL", "p": 265.29, "d": "20 พ.ย. ปิด", "b": 197.63, "q": false}, {"t": "META", "p": 560.84, "d": "20 พ.ย. ปิด", "b": 422.34, "q": false}, {"t": "AAPL", "p": 349.08, "d": "23 พ.ย. ปิด", "b": 102.59, "q": true}, {"t": "AMZN", "p": 246.82, "d": "20 พ.ย. ปิด", "b": 131.37, "q": false}, {"t": "SPCX", "p": 127.79, "d": "20 พ.ย. ปิด", "b": null, "q": null}, {"t": "TSLA", "p": 390.22, "d": "13 พ.ย. ปิด", "b": 12.59, "q": false}]</script>
+<script>
+const D=JSON.parse(document.getElementById('data').textContent);
+const latest=D.map(x=>x.d).join(' · ');
+document.getElementById('asof').textContent='ราคาล่าสุด: '+[...new Set(D.map(x=>x.d))].join(' / ');
+let hits=[];
+const rows=D.map(x=>{
+  if(!x.b) return `<tr><td>${x.t}</td><td>${x.p.toFixed(2)}</td><td>—</td><td>ไม่มีราคาซื้อ</td></tr>`;
+  const gap=(x.b/x.p-1)*100; const cls=x.p<=x.b?'hit':(gap>=-10?'near':'');
+  if(x.p<=x.b) hits.push(x.t); else if(gap>=-10) hits.push(x.t);
+  return `<tr class="${cls}"><td>${x.t}</td><td>${x.p.toFixed(2)}</td><td>${x.b.toFixed(2)}</td><td>${x.p<=x.b?'ถึงแล้ว':(gap).toFixed(0)+'%'}</td></tr>`;
+});
+document.getElementById('tb').innerHTML=rows.join('');
+document.getElementById('sum').textContent=hits.length?('ใกล้หรือถึงราคาซื้อ: '+hits.join(', ')):'ยังไม่มีหุ้นถึงราคาซื้อหรือห่างไม่เกิน 10%';
+</script></body></html>
