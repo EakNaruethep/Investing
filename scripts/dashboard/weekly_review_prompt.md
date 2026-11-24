@@ -16,7 +16,7 @@ Steps
    - Rule D: search the news for events whose probability cannot be judged.
    - Keep the per-stock JavaScript data object `S={...}` with the same field names (name, price, eps, g, V, buy, pv, vs, q, cf, bs, total, total1, gate, gw, flag, fw, na, …). Keep the texts `Aaa ต.ค. <year> = <value>%` (use the month actually used) and `ราคาปิด <date and time>`, because scripts read them.
 3. Update `data/d_holds.json`. It is a JSON object `{ticker: "one-line Thai reason"}` listing only the stocks currently blocked by rule D.
-4. Run `python3 scripts/dashboard/build_watchlist.py`, then `python3 scripts/dashboard/price_watch.py`. Check that `data/watchlist.json` matches the report's values and buy prices.
+4. Run `python3 scripts/dashboard/refresh_weekly.py` last of all edits to the report: it writes the live price, P/V, value score and both totals into the S block and the price timestamp into the header. Then run `python3 scripts/dashboard/build_watchlist.py`, then `python3 scripts/dashboard/price_watch.py`. Check that `data/watchlist.json` matches the report's values and buy prices.
 5. Commit everything you changed, with a short message, and push to `main`.
 6. Finish with a short Thai summary covering:
    - any tier-1 or tier-2 signals
