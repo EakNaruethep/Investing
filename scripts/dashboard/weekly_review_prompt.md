@@ -9,6 +9,7 @@ Stocks: AAPL, MSFT, GOOGL, AMZN, META, NVDA, TSLA, TSM (ADR, USD) and SpaceX (SP
 Steps
 1. Copy the current `output/reports/weekly-report.html` to `archive/<yyyy-mm-dd>/weekly-report.html` (use today's date).
 2. Write a new `output/reports/weekly-report.html`. Use the same layout, sections, charts and appendices as `archive/2026-11-24/2026-11-16-graham-mag7-valuation.html`, the reference format:
+   - Visual style: Grafana-style dark dashboard. Copy the `<style>` block and the Google Fonts link from the current `output/reports/weekly-report.html` unchanged (the CSS is also in `scripts/dashboard/grafana_weekly.css`). Charts must use the CSS variables, not fixed colours; the P/V bars use threshold colours (green ≤ 0.70, yellow ≤ 1.00, red above).
    - Prices with their timestamps, and Moody's Aaa (latest monthly value of the FRED series AAA). Y = max(Aaa, 4.4%).
    - TTM EPS with one-off items removed, explaining each adjustment in the appendix. g = min(15%, 0.75 × 3-year growth). V = EPS × (8.5 + 2g) × 4.4 / Y. Buy price = 0.70 V.
    - Quality gates q, cf and bs from the latest 4 quarters, and the old weighted score (25/25/20/15/15).

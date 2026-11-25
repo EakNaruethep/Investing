@@ -83,7 +83,9 @@ def spark(c):
     mx = mn + 1 if mx == mn else mx
     pts = ' '.join(f'{2 + i * 96 / (len(c) - 1):.1f},{22 - (v - mn) / (mx - mn) * 18:.1f}' for i, v in enumerate(c))
     col = '--up' if c[-1] >= c[0] else '--down'
-    return f"<svg viewBox='0 0 100 26' class='sp' aria-hidden='true'><polyline points='{pts}' fill='none' stroke='var({col})' stroke-width='1.6'/></svg>"
+    return (f"<svg viewBox='0 0 100 26' class='sp' aria-hidden='true' preserveAspectRatio='none'>"
+            f"<polygon points='2,26 {pts} 98,26' fill='var({col})' fill-opacity='.15'/>"
+            f"<polyline points='{pts}' fill='none' stroke='var({col})' stroke-width='1.4' vector-effect='non-scaling-stroke'/></svg>")
 
 
 def main():
@@ -158,14 +160,37 @@ def main():
                    f"<td>{spark(r['spark'])}</td><td class='n'>{fmt(r['buy'])}</td><td class='n'>{gap}</td>"
                    f"<td class='n'>{fmt(r['pv']) + '×' if r['pv'] else '–'}</td>"
                    f"<td><span class='pill p-{r['status']}'>{label[r['status']]}</span><span class='why'>{r['why']}</span></td></tr>")
+    # Grafana-style stat panels and bar gauge (same data as the table: buy price / price today)
+    cnt = {k: [r['t'] for r in rows if r['status'] == k] for k in label}
+    def stat(title, names, color):
+        return (f"<div class='panel stat'><div class='pt'>{title}</div><div class='v' style='color:{color if names else 'var(--muted)'}'>{len(names)}</div>"
+                f"<div class='s'>{', '.join(names) or '—'}</div></div>")
+    ivv_s = (f"<div class='panel stat'><div class='pt'>IVV (S&amp;P 500)</div><div class='v' style='color:var(--accent);font-size:30px;padding:4px 0'>{fmt(ivv['price'])}</div>"
+             f"<div class='s' style='color:var({'--up' if (ivv['prev'] and ivv['price'] >= ivv['prev']) else '--down'})'>{pc(ivv['price'] / ivv['prev'] - 1) if ivv['prev'] else ''}</div></div>") if ivv else ''
+    stats = ("<div class='stats'>" + stat('ระดับ 1 ซื้อเต็ม', cnt['t1'], 'var(--t1)') + stat('ระดับ 2 ซื้อ 1/3', cnt['t2'], 'var(--t2)')
+             + stat('ถึงราคา แต่ติดเงื่อนไข', cnt['blocked'], 'var(--bl)') + stat('ใกล้ราคาซื้อ (≤10%)', cnt['near'], 'var(--nr)') + ivv_s + "</div>")
+    gcol = dict(t1='var(--t1)', t2='var(--t2)', blocked='var(--bl)', near='var(--nr)', wait='var(--accent)', na='var(--wt)')
+    gs = []
+    for r in rows:
+        if r['gap'] is None:
+            continue
+        ratio = r['gap'] + 1          # buy / price: 100% = price has reached the buy price
+        gs.append(f"<div class='g'><b>{r['t']}</b><div class='gb'><i style='width:{min(ratio, 1) * 100:.1f}%;background:{gcol[r['status']]}'></i></div>"
+                  f"<span class='gv'>{ratio * 100:.0f}%</span></div>")
+    gauge = ("<div class='panel'><div class='pt'>ความใกล้ราคาซื้อ (ราคาซื้อ ÷ ราคาวันนี้ · 100% = ถึงราคาซื้อ)</div><div class='gauges'>" + ''.join(gs) + "</div>"
+             "<div class='legend'><span><i style='background:var(--t1)'></i>ระดับ 1</span><span><i style='background:var(--t2)'></i>ระดับ 2</span>"
+             "<span><i style='background:var(--bl)'></i>ถึงราคา แต่ติดเงื่อนไข</span><span><i style='background:var(--nr)'></i>ใกล้ราคาซื้อ</span>"
+             "<span><i style='background:var(--accent)'></i>รอ</span><span>เส้นประ = ห่าง 10%</span></div></div>")
     css = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'daily.css'), encoding='utf-8').read()
     html = f"""<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>รายงานราคารายวัน</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;600&family=IBM+Plex+Mono&display=swap"><style>{css}</style></head><body><div class="wrap">
-<header><h1>รายงานราคารายวัน</h1><div class="sub">อัปเดต {th_time(now)} (เวลาไทย) · ราคาซื้อขายล่าสุด ณ นาทีที่รัน รวมช่วงก่อนตลาดเปิดและหลังตลาดปิด (Yahoo) · % เทียบราคาปิดวันก่อน · ราคาซื้อจากรายงานรายสัปดาห์ {W['builtAt']} · Aaa {aaa}%</div></header>
+<title>รายงานราคารายวัน</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=Roboto+Mono&display=swap"><style>{css}</style></head><body><div class="wrap">
+<header><div class="crumb">▦ Dashboards / Investing /</div><h1>รายงานราคารายวัน</h1><div class="sub">อัปเดต {th_time(now)} (เวลาไทย) · ราคาซื้อขายล่าสุด ณ นาทีที่รัน รวมช่วงก่อนตลาดเปิดและหลังตลาดปิด (Yahoo) · % เทียบราคาปิดวันก่อน · ราคาซื้อจากรายงานรายสัปดาห์ {W['builtAt']} · Aaa {aaa}%</div></header>
 {banner}{stale}
-<div class="scroll"><table><thead><tr><th>หุ้น</th><th style="text-align:right">ราคา</th><th>1 เดือน</th><th style="text-align:right">ราคาซื้อ</th><th style="text-align:right">ต้องลงอีก</th><th style="text-align:right">ราคา/มูลค่า</th><th>สถานะ</th></tr></thead><tbody>
+{stats}
+{gauge}
+<div class="panel"><div class="pt">ราคาเทียบราคาซื้อ</div><div class="scroll"><table><thead><tr><th>หุ้น</th><th style="text-align:right">ราคา</th><th>1 เดือน</th><th style="text-align:right">ราคาซื้อ</th><th style="text-align:right">ต้องลงอีก</th><th style="text-align:right">ราคา/มูลค่า</th><th>สถานะ</th></tr></thead><tbody>
 {chr(10).join(trs)}
-</tbody></table></div>
+</tbody></table></div></div>
 <footer>รายงานนี้ดูแค่ข้อ A (ราคา) ส่วนข้อ B, C, D ใช้ผลจากรายงานรายสัปดาห์ (weekly-report.html) · ระดับ 2 ใช้ราคาซื้อที่คิดด้วย Aaa จริงและคะแนนเดิมที่ราคาวันนี้ · "ต้องลงอีก" = ราคาซื้อ ÷ ราคาวันนี้ − 1 · ไม่ใช่คำแนะนำการลงทุน</footer>
 </div></body></html>"""
     out = os.path.join(ROOT, 'output', 'reports', 'daily-report.html')
