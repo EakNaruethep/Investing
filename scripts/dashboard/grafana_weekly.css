@@ -94,3 +94,11 @@ ul{margin:6px 0;padding-left:20px}
 .ck .y{background:var(--good-bg);color:var(--good)} .ck .x{background:var(--bad-bg);color:var(--bad)} .ck .s{color:var(--text-muted)}
 .ck div{display:flex;gap:6px;align-items:flex-start}.ck .m{flex:none;margin-right:0!important}
 .ck .r{font-size:12px;color:var(--text-secondary);line-height:1.45;padding-top:2px}
+/* evidence links: a key claim links to the data that backs it */
+a.ev{color:#6e9fff;text-decoration:underline dotted;text-underline-offset:3px}
+a.ev::after{content:"\00a0🔎";font-size:11px}
+a.ev.ev-missing{color:var(--bad);text-decoration:line-through}
+[id]{scroll-margin-top:12px}
+tr:target td,.card:target,h3:target{background:var(--warn-bg)!important;transition:background .4s}
+.evtbl td{vertical-align:top}.evtbl .q{font-size:11.5px;color:var(--text-muted)}.evtbl .v{font-size:14px;font-weight:600}
+.evtbl .v.neg{color:var(--neg)}.evtbl .v.pos{color:var(--pos)}.evtbl .sm{font-size:11.5px;color:var(--text-secondary)}
