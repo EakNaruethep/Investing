@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Daily report: check rule A (price) only, using the latest traded price at the minute it runs.
+"""Daily report: check rule A (price) only, using the latest close (or the live regular-session
+price while the market is open). Pre-market / after-hours trades are shown beside it, not used.
 
 Reads the buy prices from data/watchlist.json (written by the weekly review) and writes
 output/reports/daily-report.html, plus one line per stock in data/price_history.csv.
@@ -29,23 +30,21 @@ def quote(sym):
         try:
             m = get(f'https://query1.finance.yahoo.com/v8/finance/chart/{sym}?range=1d&interval=1m&includePrePost=true')
             d = get(f'https://query1.finance.yahoo.com/v8/finance/chart/{sym}?range=1mo&interval=1d')
+            meta = m['meta']
+            # Decide on the latest regular-session price (the close outside market hours);
+            # pre-market / after-hours trades are shown beside it only.
+            price, tsec = float(meta['regularMarketPrice']), int(meta['regularMarketTime'])
+            reg = meta['currentTradingPeriod']['regular']
             ts, cl = m.get('timestamp') or [], m['indicators']['quote'][0]['close']
             k = len(ts) - 1
             while k >= 0 and cl[k] is None:
                 k -= 1
-            if k >= 0:
-                price, tsec = float(cl[k]), int(ts[k])
-            else:
-                price, tsec = float(m['meta']['regularMarketPrice']), int(m['meta']['regularMarketTime'])
-            reg = m['meta']['currentTradingPeriod']['regular']
-            if abs(tsec - reg['end']) <= 60:
-                sess = 'ราคาปิด'
-            elif tsec < reg['start']:
-                sess = 'ก่อนตลาดเปิด'
-            elif tsec < reg['end']:
-                sess = 'ระหว่างวัน'
-            else:
-                sess = 'หลังตลาดปิด'
+            ext = None
+            if k >= 0 and not (reg['start'] <= ts[k] < reg['end']) and ts[k] > tsec:
+                ext = dict(price=float(cl[k]), sess='ก่อนตลาดเปิด' if ts[k] < reg['start'] else 'หลังตลาดปิด',
+                           when=th_time(datetime.fromtimestamp(int(ts[k]), ICT)))
+            now_s = time.time()
+            sess = 'ระหว่างวัน' if reg['start'] <= now_s < reg['end'] and tsec >= reg['start'] else 'ราคาปิด'
             # previous close = last daily close dated before the trade day (exchange time);
             # meta.chartPreviousClose of the 1-day chart is not reliable for this.
             off = timezone(timedelta(seconds=d['meta']['gmtoffset']))
@@ -57,7 +56,7 @@ def quote(sym):
                 closes.append(float(c))
                 if datetime.fromtimestamp(t, off).date() < day:
                     prev = float(c)
-            return dict(price=price, prev=prev, closes=closes, sess=sess,
+            return dict(price=price, prev=prev, closes=closes, sess=sess, ext=ext,
                         when=th_time(datetime.fromtimestamp(tsec, ICT)))
         except Exception:
             time.sleep(2 * (attempt + 1))
@@ -88,6 +87,15 @@ def spark(c):
             f"<polyline points='{pts}' fill='none' stroke='var({col})' stroke-width='1.4' vector-effect='non-scaling-stroke'/></svg>")
 
 
+def ext_html(r):
+    e = r.get('ext')
+    if not e or not r.get('price'):
+        return ''
+    cc = 'dn' if e['price'] < r['price'] else 'up'
+    return (f"<span class='nm'>{e['sess']} {e['when']}: {fmt(e['price'])} "
+            f"<span class='{cc}'>{pc(e['price'] / r['price'] - 1)}</span></span>")
+
+
 def main():
     W = json.load(open(os.path.join(ROOT, 'data', 'watchlist.json'), encoding='utf-8-sig'))
     aaa, yld = float(W['aaa']), float(W['yld'])
@@ -95,12 +103,12 @@ def main():
     for s in W['stocks']:
         q = quote(s['yahoo']) if s.get('yahoo') else None
         r = dict(t=s['t'], name=s['name'], price=None, chg=None, pv=None, buy=s.get('buy'), gap=None,
-                 status='na', why='', spark=[], sess='', when='')
+                 status='na', why='', spark=[], sess='', when='', ext=None)
         rows.append(r)
         if q is None:
             r['why'] = 'ดึงราคาไม่ได้' if s.get('yahoo') else 'ยังไม่มีราคาซื้อขาย'
             continue
-        r.update(price=q['price'], sess=q['sess'], when=q['when'], spark=q['closes'])
+        r.update(price=q['price'], sess=q['sess'], when=q['when'], spark=q['closes'], ext=q['ext'])
         if q['prev']:
             r['chg'] = q['price'] / q['prev'] - 1
         if s.get('na') or not s.get('V'):
@@ -156,7 +164,7 @@ def main():
         gap = '–' if r['gap'] is None else ('ถึงแล้ว' if r['gap'] >= 0 else pc(r['gap']))
         cc = 'dn' if (r['chg'] or 0) < 0 else 'up'
         trs.append(f"<tr><td><b>{r['t']}</b><span class='nm'>{r['name']}</span></td>"
-                   f"<td class='n'>{fmt(r['price'])}<span class='nm {cc}'>{pc(r['chg'])}</span><span class='nm'>{r['sess']} {r['when']}</span></td>"
+                   f"<td class='n'>{fmt(r['price'])}<span class='nm {cc}'>{pc(r['chg'])}</span><span class='nm'>{r['sess']} {r['when']}</span>{ext_html(r)}</td>"
                    f"<td>{spark(r['spark'])}</td><td class='n'>{fmt(r['buy'])}</td><td class='n'>{gap}</td>"
                    f"<td class='n'>{fmt(r['pv']) + '×' if r['pv'] else '–'}</td>"
                    f"<td><span class='pill p-{r['status']}'>{label[r['status']]}</span><span class='why'>{r['why']}</span></td></tr>")
@@ -184,7 +192,7 @@ def main():
     css = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'daily.css'), encoding='utf-8').read()
     html = f"""<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>รายงานราคารายวัน</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=Roboto+Mono&display=swap"><style>{css}</style></head><body><div class="wrap">
-<header><div class="crumb">▦ Dashboards / Investing /</div><h1>รายงานราคารายวัน</h1><div class="sub">อัปเดต {th_time(now)} (เวลาไทย) · ราคาซื้อขายล่าสุด ณ นาทีที่รัน รวมช่วงก่อนตลาดเปิดและหลังตลาดปิด (Yahoo) · % เทียบราคาปิดวันก่อน · ราคาซื้อจากรายงานรายสัปดาห์ {W['builtAt']} · Aaa {aaa}%</div></header>
+<header><div class="crumb">▦ Dashboards / Investing /</div><h1>รายงานราคารายวัน</h1><div class="sub">อัปเดต {th_time(now)} (เวลาไทย) · ตัดสินด้วยราคาปิดล่าสุด (หรือราคาระหว่างวันถ้าตลาดเปิดอยู่) จาก Yahoo ณ นาทีที่รัน · ราคาก่อนตลาดเปิด/หลังตลาดปิดแสดงไว้ใต้ราคาเป็นข้อมูลเสริม ไม่ใช้ตัดสิน · % เทียบราคาปิดวันก่อน · ราคาซื้อจากรายงานรายสัปดาห์ {W['builtAt']} · Aaa {aaa}%</div></header>
 {banner}{stale}
 {stats}
 {gauge}
