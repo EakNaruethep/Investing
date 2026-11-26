@@ -10,6 +10,7 @@ There are only two reports:
 All other reports, including the backtests, are kept in `archive/`.
 
 ## How the two reports connect
+0. `scripts/dashboard/fetch_fundamentals.py` fetches every outside number except news (Aaa from FRED, quarterly statements from Yahoo, annual EPS from SEC, TWD/USD) and works out TTM EPS, EPS growth for rule C and the quality gates q, cf, bs. It writes `data/fundamentals.json`; with `--apply` it also writes them, with g, V and the buy price, into the weekly report's `S={...}` block. Only news, one-off EPS adjustments, the analyst growth estimate and the core-business score are left to the model.
 1. The weekly report keeps its per-stock data in a `S={...}` block.
 2. `scripts/dashboard/build_watchlist.py` copies that data into `data/watchlist.json`.
 3. `data/d_holds.json` lists the stocks blocked by rule D.
