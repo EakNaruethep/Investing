@@ -1,11 +1,11 @@
 name: Buy-signal alert
 
-# Checks the buy rules every hour while the US market is open (and once after the close),
-# and opens a GitHub issue when a stock passes tier 1 or tier 2. GitHub emails the repo owner
+# Checks the buy rules once a day at 13:00 Thai time (Tue–Sat, after each US session) on the
+# latest regular-session close, and opens a GitHub issue when a stock passes tier 1 or tier 2. GitHub emails the repo owner
 # and pushes to the GitHub mobile app. Same check as the daily report; writes no files.
 on:
   schedule:
-    - cron: '23 14-21 * * 1-5'   # UTC = 21:23–04:23 Thai time, Mon–Fri US sessions
+    - cron: '0 6 * * 2-6'   # 06:00 UTC = 13:00 Thai time, Tue–Sat (after Mon–Fri US sessions)
   workflow_dispatch:
     inputs:
       test:

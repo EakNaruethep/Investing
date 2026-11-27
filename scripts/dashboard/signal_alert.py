@@ -13,7 +13,7 @@ for days notifies once:
   - signal gone                -> comment and close the issue
 If NTFY_TOPIC is set, the same text also goes to https://ntfy.sh/<topic> (optional phone push).
 
-Run in GitHub Actions (.github/workflows/buy-signal-alert.yml) with GITHUB_TOKEN and
+Runs daily at 13:00 Thai time in GitHub Actions (.github/workflows/buy-signal-alert.yml) with GITHUB_TOKEN and
 GITHUB_REPOSITORY set.  Locally:  python3 scripts/dashboard/signal_alert.py --dry-run
 Standard library only.
 """
