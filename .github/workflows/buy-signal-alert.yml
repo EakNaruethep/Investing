@@ -1,0 +1,37 @@
+name: Buy-signal alert
+
+# Checks the buy rules once a day at 13:00 Thai time (Tue–Sat, after each US session) on the
+# latest regular-session close, and opens a GitHub issue when a stock passes tier 1 or tier 2. GitHub emails the repo owner
+# and pushes to the GitHub mobile app. Same check as the daily report; writes no files.
+on:
+  schedule:
+    - cron: '0 6 * * 2-6'   # 06:00 UTC = 13:00 Thai time, Tue–Sat (after Mon–Fri US sessions)
+  workflow_dispatch:
+    inputs:
+      test:
+        description: 'Send a test notification (opens an issue "TEST", closed on the next run)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: buy-signal-alert
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check buy signals
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+        run: python3 scripts/dashboard/signal_alert.py ${{ inputs.test && '--test' || '' }}

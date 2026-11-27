@@ -96,8 +96,12 @@ def ext_html(r):
             f"<span class='{cc}'>{pc(e['price'] / r['price'] - 1)}</span></span>")
 
 
-def main():
-    W = json.load(open(os.path.join(ROOT, 'data', 'watchlist.json'), encoding='utf-8-sig'))
+def load_watchlist():
+    return json.load(open(os.path.join(ROOT, 'data', 'watchlist.json'), encoding='utf-8-sig'))
+
+
+def evaluate(W):
+    """Fetch live prices and classify each stock: t1, t2, blocked, near, wait or na."""
     aaa, yld = float(W['aaa']), float(W['yld'])
     rows = []
     for s in W['stocks']:
@@ -135,6 +139,13 @@ def main():
         else:
             r['status'] = 'wait'
             r['why'] = ' · '.join(block) if block else (f"ด่านคุณภาพ: {s.get('gateNote')}" if not s.get('gate') else 'รอราคา')
+    return rows
+
+
+def main():
+    W = load_watchlist()
+    aaa = float(W['aaa'])
+    rows = evaluate(W)
     ivv = quote('IVV')
 
     now = datetime.now(ICT)
